@@ -1,4 +1,4 @@
-from poem import poem, lines, words, num_stanzas, num_lines, num_words
+from features.tests.poem import poem, lines, words, num_stanzas, num_lines, num_words
 from features import simple_count
 
 def test_num_words_in_line():

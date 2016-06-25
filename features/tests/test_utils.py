@@ -1,4 +1,4 @@
-from poem import poem, lines, words
+from features.tests.poem import poem, lines, words
 from features import utils
 
 def test_get_poem():
