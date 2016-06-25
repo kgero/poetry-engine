@@ -7,10 +7,10 @@ def get_poem(filepath):
 	with codecs.open(filepath, 'r', 'utf-8') as f:
 		lines = f.readlines()
 	poem = ""
-	for line in lines[2:]:
+	for line in lines:
 		line = line.strip() + '\n'
 		poem += line
-	return poem[0:-1]  # removes trailing '\n'
+	return poem.strip('\n')
 
 def get_lines(poem):
 	'''Returns lines in poem as a list of str.'''
