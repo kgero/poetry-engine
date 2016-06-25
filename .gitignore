@@ -1,5 +1,9 @@
+__pycache__/
 *.py[cod]
+
 venv/
+
+poems/
 
 .cache
 .DS_Store
