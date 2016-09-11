@@ -1,4 +1,7 @@
 beautifulsoup4==4.4.1
 bs4==0.0.1
+lda==1.0.4
+numpy==1.11.1
+pbr==1.10.0
 py==1.4.31
 pytest==2.9.2
