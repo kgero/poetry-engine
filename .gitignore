@@ -4,6 +4,7 @@ __pycache__/
 venv/
 
 poems/
+temp/
 
 .cache
 .DS_Store
