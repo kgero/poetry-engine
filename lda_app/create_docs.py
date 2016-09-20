@@ -48,9 +48,13 @@ def read_poem(path):
     trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’'})
     trnsltr2 = str.maketrans('\n', ' ')
     clean_str = ''
+    first_line = 1
 
     with open(path, 'r') as f:
         for line in f:
+            if first_line:
+                first_line = 0
+                continue
             clean_str += line.translate(trnsltr1).translate(trnsltr2).lower()
     return clean_str
 
@@ -78,22 +82,39 @@ def lexicalize(raw_docs):
     return documents, word_list
 
 
+def get_poet(path_str):
+    '''
+    Returns poet name. e.g. 'poems/walt-whiman' returns 'Walt Whitman'.
+
+    :param path_str: str
+    :return: str
+    '''
+    return path_str.split('/')[1].replace('-', ' ').title()
+
+
 def get_docs(directory):
     '''
-    Returns docs, vocab, and doc names based on all text files in directory.
+    Returns docs, vocab, doc names, poets, and url of all text files in directory.
 
     :param directory: str
     :return: array, list, list
     '''
     raw_docs = []
     doc_names = []
+    poets = []
+    urls = []
 
     for root, subdir, files in os.walk(directory):
         if root.count(os.path.sep) == 1:
             for name in files:
                 path = os.path.join(root, name)
-                doc_names.append(name[0:-4])
+                with open(path, 'r') as f:
+                    url = f.readline()
+                    doc_name = f.readline()
+                doc_names.append(doc_name)
                 raw_docs.append(read_poem(path))
+                poets.append(get_poet(root))
+                urls.append(url)
 
     docs, vocab = lexicalize(raw_docs)
-    return docs, vocab, doc_names
+    return docs, vocab, doc_names, poets, urls

@@ -1,4 +1,4 @@
-from lda_app.create_docs import get_features, lexicalize, read_poem
+from lda_app.create_docs import get_features, lexicalize, read_poem, get_poet
 
 import numpy as np
 
@@ -34,6 +34,7 @@ def test_get_features():
 
 def test_read_poem():
     expected_str = (
+        'america '
         'centre of equal daughters equal sons all all alike endeard grown '
         'ungrown young or old strong ample fair enduring capable rich '
         'perennial with the earth with freedom law and love a grand sane '
@@ -58,3 +59,9 @@ def test_lexicalize():
     actual_array, actual_word_list = lexicalize(raw_docs)
     assert actual_array.all() == expected_array.all()
     assert actual_word_list == expected_word_list
+
+
+def test_get_poet():
+    path_str = 'poems/walt-whitman'
+    poet = 'Walt Whitman'
+    assert poet == get_poet(path_str)
