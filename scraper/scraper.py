@@ -1,52 +1,65 @@
 # based on https://github.com/eli8527/poetryfoundation-scraper/
 
+from db_mgmt import db_mgmt
+
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import html
-import re
-import os
 
 
-def download_poems(poet):
-    if not os.path.exists(os.path.join('poems', poet)):
-        os.mkdir(os.path.join('poems', poet))
+def get_poem_text(soup):
+    '''
+    Return text of poem.
 
-    url = "http://www.poetryfoundation.org/poems-and-poets/poets/detail/"+poet+"#about"
+    :param soup: BeautifulSoup object
+    :return: str
+    '''
+    poem = ''
+    poem_content = soup.find_all('div', {'class': 'poem'})
+    for content in poem_content:
+        for line in content.find_all('div'):
+            text = html.parser.unescape(line.text).encode('utf8')
+            out = text.decode('utf8').strip()
+            poem += "{}\n".format(out)
+    return poem
+
+
+def get_poem_info(soup):
+    '''
+    Return (title, poet).
+
+    :param soup: BeautifulSoup object
+    :return: tuple
+    '''
+    title = soup.find("meta", property="og:title")["content"]
+    poet = soup.find("meta", property="article:author")["content"]
+
+    return (title, poet)
+
+
+def scrape_poem_page(conn, table, url):
+    '''
+    Place poem info into database if it is not already there.
+
+    :param url: list of bs4 contents
+    :param table: str
+    :return: None
+    '''
     page = urlopen(url)
-    soup = BeautifulSoup(page.read(), "lxml")  # html.parser fails for certain poems
+    soup = BeautifulSoup(page.read(), "lxml")
+    title, poet = get_poem_info(soup)
+    if (db_mgmt.check_for_poem(conn, table, poet, title)):
+        text = get_poem_text(soup)
+        db_mgmt.insert_vals(conn, table, (title, poet, url, text))
+    return None
 
-    # this ignores .*/resources/learning/core-poems/detail/.* poems
-    poems = soup.find_all('a', href=re.compile('.*/poems-and-poets/poems/detail/.*'))
 
-    # the first returned url has http:, the others start at //www. 
-    # i ... don't know why
-    found_poems = []
-    for poem in poems:
-        poem_url = poem.get('href')
-        if 'http:' not in poem_url:
-            poem_url = 'http:' + poem_url
-        if poem_url not in found_poems:
-            poem_page = urlopen(poem_url)
-            poem_soup = BeautifulSoup(poem_page.read(), "lxml")
+def scrape_website(base_url, function):
+    '''
+    Run through all pages and apply function.
 
-            poem_title = poem_soup.find('span', {'class': 'hdg hdg_1'})
-
-            if poem_title:
-                title = html.parser.unescape(poem_title.text).encode('utf8')
-                title = title.decode('utf8')
-                title_filename = ''.join(e for e in title if e.isalnum())
-
-                found_poems.append(poem_url)
-
-                poem_content = poem_soup.find_all('div', {'class': 'poem'})
-                filepath = 'poems/' + poet + '/' + title_filename + '.txt'
-                output = open(filepath, 'w')
-                print(poem_url, file=output)
-                print(title, file=output)
-                for content in poem_content:
-                    for line in content.find_all('div'):
-                        text = html.parser.unescape(line.text).encode('utf8')
-                        out = text.decode('utf8')
-                        print(out, file=output)
-
-                output.close()
+    :param base_url: str
+    :param function: function
+    :return: None
+    '''
+    return None
