@@ -18,6 +18,8 @@ import string
 
 import numpy as np
 
+from db_mgmt import db_mgmt
+
 
 def get_features(words, word_list):
     '''
@@ -88,33 +90,10 @@ def get_docs(conn, table):
     :param table: str
     :return: array, list
     '''
-    raw_docs = []
-
-    c = conn.cursor()
-    c.execute('SELECT rowid,* FROM {}'.format(table))
-    all_rows = c.fetchall()
-    for row in all_rows:
-        poem = row[4]
-        clean_poem = read_poem(poem)
-        raw_docs.append(clean_poem)
-
-    docs, vocab = lexicalize(raw_docs)
+    raw_docs = db_mgmt.get_values(conn, table, 'poem')
+    clean_docs = []
+    for doc in raw_docs:
+        cleaned = read_poem(doc)
+        clean_docs.append(cleaned)
+    docs, vocab = lexicalize(clean_docs)
     return docs, vocab
-
-
-def get_titles(conn, table):
-    '''
-    Return list of titles from table of poetry.
-
-    :param conn: sqlite connection
-    :param table: str
-    :return: list
-    '''
-    titles = []
-    c = conn.cursor()
-    c.execute('SELECT rowid,* FROM {}'.format(table))
-    all_rows = c.fetchall()
-    for row in all_rows:
-        title = row[1]
-        titles.append(title)
-    return titles
