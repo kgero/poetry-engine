@@ -5,6 +5,7 @@ from db_mgmt import db_mgmt
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import html
+import re
 
 
 def get_poem_text(soup):
@@ -39,27 +40,54 @@ def get_poem_info(soup):
 
 def scrape_poem_page(conn, table, url):
     '''
-    Place poem info into database if it is not already there.
+    Place poem info into database if it has text and is not already there.
 
-    :param url: list of bs4 contents
+    Return True is poem is inserted.
+
+    :param conn: sqlite connection
     :param table: str
+    :param url: str
     :return: None
     '''
-    page = urlopen(url)
+    try:
+        page = urlopen(url)
+    except:
+        return False
+
     soup = BeautifulSoup(page.read(), "lxml")
+    poem = get_poem_text(soup)
+    if len(poem) == 0:
+        return False
+
     title, poet = get_poem_info(soup)
-    if (db_mgmt.check_for_poem(conn, table, poet, title)):
-        text = get_poem_text(soup)
-        db_mgmt.insert_vals(conn, table, (title, poet, url, text))
-    return None
+    if db_mgmt.check_for_poem(conn, table, poet, title) is False:
+        poem = get_poem_text(soup)
+        db_mgmt.insert_vals(conn, table, (title, poet, url, poem))
+        return True
+    return False
 
 
-def scrape_website(base_url, function):
+def scrape_website(conn, table, base_url, start_num, end_num, print_output=False):
     '''
     Run through all pages and apply function.
 
+    base_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/
+    example_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/48160
+
+    :param conn: slqlite connection
+    :param table: str
     :param base_url: str
-    :param function: function
+    :param start_num: int
+    :param end_num: int
+    :param print_output: bool
     :return: None
     '''
+    i = start_num
+    while i <= end_num:
+        url = base_url + str(i)
+        success = scrape_poem_page(conn, table, url)
+        if success and print_output:
+            print(url)
+        i += 1
+
     return None
