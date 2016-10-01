@@ -13,7 +13,7 @@ Per directory:
 word_list = [word1, word2, word3]
 """
 
-import os
+import re
 import string
 
 import numpy as np
@@ -21,9 +21,9 @@ import numpy as np
 
 def get_features(words, word_list):
     '''
-    Returns a word_dict and updated word_list.
+    Return a word_dict and updated word_list.
 
-    :param words: str
+    :param words: str (words are space separated)
     :param word_list: list
     :return: dict, list
     '''
@@ -38,30 +38,28 @@ def get_features(words, word_list):
     return word_dict, word_list
 
 
-def read_poem(path):
+def read_poem(poem):
     '''
-    Returns a cleaned string, all lower case, punctuation removed.
+    Return a cleaned string.
+
+    Returned string is all lower case with punctuation and line feeds removed.
 
     :param path: str
     :return: str
     '''
     trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’'})
     trnsltr2 = str.maketrans('\n', ' ')
-    clean_str = ''
-    first_line = 1
 
-    with open(path, 'r') as f:
-        for line in f:
-            if first_line:
-                first_line = 0
-                continue
-            clean_str += line.translate(trnsltr1).translate(trnsltr2).lower()
+    clean_str = poem.translate(trnsltr1).translate(trnsltr2).lower()
+    clean_str = re.sub(' +', ' ', clean_str)
+    clean_str = clean_str.strip()
+
     return clean_str
 
 
 def lexicalize(raw_docs):
     '''
-    Returns a document array based on raw_docs, a list of cleaned strings.
+    Return a document array based on raw_docs, a list of cleaned strings.
 
     :param raw_docs: list
     :return: array
@@ -82,39 +80,41 @@ def lexicalize(raw_docs):
     return documents, word_list
 
 
-def get_poet(path_str):
+def get_docs(conn, table):
     '''
-    Returns poet name. e.g. 'poems/walt-whiman' returns 'Walt Whitman'.
+    Return docs, for all entries in databse table from col 'poem'.
 
-    :param path_str: str
-    :return: str
-    '''
-    return path_str.split('/')[1].replace('-', ' ').title()
-
-
-def get_docs(directory):
-    '''
-    Returns docs, vocab, doc names, poets, and url of all text files in directory.
-
-    :param directory: str
-    :return: array, list, list
+    :param conn: sqlite conn
+    :param table: str
+    :return: array, list
     '''
     raw_docs = []
-    doc_names = []
-    poets = []
-    urls = []
 
-    for root, subdir, files in os.walk(directory):
-        if root.count(os.path.sep) == 1:
-            for name in files:
-                path = os.path.join(root, name)
-                with open(path, 'r') as f:
-                    url = f.readline()
-                    doc_name = f.readline()
-                doc_names.append(doc_name)
-                raw_docs.append(read_poem(path))
-                poets.append(get_poet(root))
-                urls.append(url)
+    c = conn.cursor()
+    c.execute('SELECT rowid,* FROM {}'.format(table))
+    all_rows = c.fetchall()
+    for row in all_rows:
+        poem = row[4]
+        clean_poem = read_poem(poem)
+        raw_docs.append(clean_poem)
 
     docs, vocab = lexicalize(raw_docs)
-    return docs, vocab, doc_names, poets, urls
+    return docs, vocab
+
+
+def get_titles(conn, table):
+    '''
+    Return list of titles from table of poetry.
+
+    :param conn: sqlite connection
+    :param table: str
+    :return: list
+    '''
+    titles = []
+    c = conn.cursor()
+    c.execute('SELECT rowid,* FROM {}'.format(table))
+    all_rows = c.fetchall()
+    for row in all_rows:
+        title = row[1]
+        titles.append(title)
+    return titles
