@@ -28,7 +28,7 @@ base_url = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/'
 def conn(request):
     conn = sqlite3.connect('temp/test.db')
     c = conn.cursor()
-    c.execute("CREATE TABLE poetry (title text, poet text, url text, poem text)")
+    c.execute("CREATE TABLE poetry (id integer primary key, title text, poet text, url text, poem text)")
     conn.commit()
 
     def fin():

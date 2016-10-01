@@ -1,4 +1,30 @@
 """Functions for inserting and retrieving data from a database."""
+import sqlite3
+
+
+def print_db_table_info(conn, table):
+    '''
+    Return nothing. Print info about the table.
+
+    :param conn: sqlite conenction
+    :param table: str
+    :return: None
+    '''
+    print("Num entries: {}", get_num_rows(conn, table))
+
+
+def get_num_rows(conn, table):
+    '''
+    Returns the number of rows in the table.
+
+    :param conn: sqlite conenction
+    :param table: str
+    :return: int
+    '''
+    c = conn.cursor()
+    c.execute('SELECT rowid,* FROM {}'.format(table))
+    all_rows = c.fetchall()
+    return len(all_rows)
 
 
 def create_table(conn, table, cols):
@@ -40,7 +66,7 @@ def insert_vals(conn, table, vals):
     :return: None
     '''
     c = conn.cursor()
-    cmd = "INSERT INTO {} VALUES (".format(table)
+    cmd = "INSERT INTO {} VALUES (null,".format(table)
     for i in range(len(vals)):
         cmd += "?,"
     cmd = cmd[:-1]  # remove last comma
@@ -70,3 +96,25 @@ def check_for_poem(conn, table, poet, title):
     if len(c.fetchall()) == 0:
         return False
     return True
+
+
+def get_values(conn, table, col):
+    '''
+    Return list of values from col.
+
+    :param conn: sqlite connection
+    :param table: str
+    :param col: str
+    :return: list
+    '''
+    values = []
+
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM {}'.format(table))
+    all_rows = c.fetchall()
+    for row in all_rows:
+        val = row[col]
+        values.append(val)
+
+    return values
