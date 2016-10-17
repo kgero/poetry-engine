@@ -1,6 +1,28 @@
+from distance import utils
 
 
-def get_distance(doc1, doc2, model, printout=False):
+def get_lda_distance(model, docs):
+    '''
+    Return list of poems indeces and list of normalized rms distances. 
+
+    :param model: lda model
+    :param docs: lda docs
+    :return: list of tuples, list of floats
+    '''
+    indeces = []
+    rms_distance = []
+    # python arrays/lists are indexed at 0, but the db indexes at 1
+    # so i and j are python indexes, but we plus one bc we want the db index
+    for i in range(len(docs)):
+        for j in range(i + 1, len(docs)):
+            rms = lda_distance(i, j, model)
+            indeces.append((i + 1, j + 1))
+            rms_distance.append(rms)
+
+    return indeces, utils.normalize_feature(rms_distance)
+
+
+def lda_distance(doc1, doc2, model, printout=False):
     '''
     Return the distance between two documents based on the lda model.
 

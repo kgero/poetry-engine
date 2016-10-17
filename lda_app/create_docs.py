@@ -20,6 +20,8 @@ import numpy as np
 
 from db_mgmt import db_mgmt
 
+stop_words = ['the', 'and', 'of', 'a', 'to', 'in', 'i']
+
 
 def get_features(words, word_list):
     '''
@@ -40,7 +42,7 @@ def get_features(words, word_list):
     return word_dict, word_list
 
 
-def read_poem(poem):
+def read_poem(poem, stopwords=False):
     '''
     Return a cleaned string.
 
@@ -53,6 +55,12 @@ def read_poem(poem):
     trnsltr2 = str.maketrans('\n', ' ')
 
     clean_str = poem.translate(trnsltr1).translate(trnsltr2).lower()
+
+    if stopwords:
+        words = clean_str.split()
+        keepwords = [word for word in words if word not in stop_words]
+        clean_str = ' '.join(keepwords)
+
     clean_str = re.sub(' +', ' ', clean_str)
     clean_str = clean_str.strip()
 
@@ -82,7 +90,7 @@ def lexicalize(raw_docs):
     return documents, word_list
 
 
-def get_docs(conn, table):
+def get_docs(conn, table, stopwords=False):
     '''
     Return docs, for all entries in databse table from col 'poem'.
 
@@ -93,7 +101,36 @@ def get_docs(conn, table):
     raw_docs = db_mgmt.get_values(conn, table, 'poem')
     clean_docs = []
     for doc in raw_docs:
-        cleaned = read_poem(doc)
+        cleaned = read_poem(doc, stopwords=stopwords)
         clean_docs.append(cleaned)
     docs, vocab = lexicalize(clean_docs)
     return docs, vocab
+
+
+def get_vocab_freq(strings, doc_freq=False):
+    '''
+    Return dict of vocab frequency for all strings.
+
+    Key is the word, value is num times seen if doc_freq=False.
+    Key is the word, value is num docs seen in if doc_freq=True.
+    This is used for determing stop words to be filtered out.
+
+    :param strings: list of str
+    :return: dict
+    '''
+    vocab_freq = {}
+    for doc in strings:
+        cleaned = read_poem(doc)
+        word_dict, word_list = get_features(cleaned, [])
+        for word in word_dict:
+            if word in vocab_freq:
+                if not doc_freq:
+                    vocab_freq[word] += word_dict[word]
+                else:
+                    vocab_freq[word] += 1
+            else:
+                if not doc_freq:
+                    vocab_freq[word] = word_dict[word]
+                else:
+                    vocab_freq[word] = 1
+    return vocab_freq

@@ -1,4 +1,4 @@
-from lda_app.create_docs import get_features, lexicalize, read_poem
+from lda_app.create_docs import get_features, lexicalize, read_poem, get_vocab_freq
 
 import numpy as np
 
@@ -39,6 +39,18 @@ def test_read_poem():
 
     assert actual_str == expected_str
 
+    poem = 'is this it? and i you?'
+    expected_str = 'is this it you'
+    actual_str = read_poem(poem, stopwords=True)
+
+    assert actual_str == expected_str
+
+    poem = 'is this it? and i you?'
+    expected_str = 'is this it and i you'
+    actual_str = read_poem(poem, stopwords=False)
+
+    assert actual_str == expected_str
+
 
 def test_lexicalize():
     raw_docs = [
@@ -54,3 +66,30 @@ def test_lexicalize():
     actual_array, actual_word_list = lexicalize(raw_docs)
     assert actual_array.all() == expected_array.all()
     assert actual_word_list == expected_word_list
+
+
+def test_get_vocab_freq():
+    strings = [
+        'hey hey who are you',
+        'hey person',
+        'hey you']
+
+    expected_vocab_freq = {
+        'hey': 4,
+        'who': 1,
+        'are': 1,
+        'you': 2,
+        'person': 1}
+
+    actual_vocab_freq = get_vocab_freq(strings)
+    assert actual_vocab_freq == expected_vocab_freq
+
+    expected_vocab_freq = {
+        'hey': 3,
+        'who': 1,
+        'are': 1,
+        'you': 2,
+        'person': 1}
+
+    actual_vocab_freq = get_vocab_freq(strings, doc_freq=True)
+    assert actual_vocab_freq == expected_vocab_freq
