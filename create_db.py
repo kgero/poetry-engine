@@ -4,7 +4,8 @@ import sqlite3
 
 from db_mgmt import db_mgmt
 from scraper import scraper
-from lda_app import create_docs, run_lda, get_distance
+from lda_app import create_docs, run_lda
+from distance import lda_distance, size_features
 
 # from lda_app.run_lda import run_lda
 # from lda_app.get_distance import get_distance
@@ -46,13 +47,19 @@ def create_distance_db(conn, model, docs):
     c.execute("CREATE TABLE poem_distances (id integer primary key, poem1 int, poem2 int, distance real)")
     conn.commit()
 
-    # python arrays/lists are indexed at 0, but the db indexes at 1
-    # so i and j are python indexes, but we plus one when entering into the db
-    for i in range(len(docs)):
-        for j in range(i + 1, len(docs)):
-            rms = get_distance.get_distance(i, j, model)
-            vals = (i + 1, j + 1, rms)
-            c.execute("INSERT INTO poem_distances VALUES (null, ?,?,?)", vals)
+    print("getting all poems")
+    all_poems = db_mgmt.get_values(conn, 'poetry', 'poem')
+
+    print("getting lda distance")
+    indeces, lda_d = lda_distance.get_lda_distance(model, docs)
+
+    print("getting size distance")
+    size_d = size_features.get_size_distance(indeces, all_poems)
+
+    print("commiting to db")
+    for i in range(len(indeces)):
+        vals = (indeces[i][0], indeces[i][1], lda_d[i] + size_d[i])
+        c.execute("INSERT INTO poem_distances VALUES (null, ?,?,?)", vals)
     conn.commit()
 
 
@@ -62,6 +69,8 @@ if __name__ == "__main__":
                         help='add poems to the poetry databse')
     parser.add_argument('--run_lda', action='store_true',
                         help='run lda on poems in current database')
+    parser.add_argument('--print_lda', action='store_true',
+                        help='print results of lda output stored in /temp/lda_out.p')
     parser.add_argument('--get_distance', action='store_true',
                         help='get distance between poems in current database')
     parser.add_argument('-s', '--start_num', default=48000, type=int,
@@ -89,6 +98,10 @@ if __name__ == "__main__":
         lda_out = (docs, vocab, titles, model)
         pickle.dump(lda_out, open('temp/lda_out.p', 'wb'))
 
+        run_lda.print_lda_output(docs, model, vocab, titles)
+
+    if args.print_lda:
+        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
         run_lda.print_lda_output(docs, model, vocab, titles)
 
     if args.get_distance:
