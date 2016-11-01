@@ -1,6 +1,8 @@
 import argparse
 import pickle
 import sqlite3
+import dotenv
+import psycopg2
 
 from db_mgmt import db_mgmt
 from scraper import scraper
@@ -44,7 +46,7 @@ def create_distance_db(conn, model, docs):
     '''
     c = conn.cursor()
     c.execute('drop table if exists {}'.format('poem_distances'))
-    c.execute("CREATE TABLE poem_distances (id integer primary key, poem1 int, poem2 int, distance real)")
+    c.execute("CREATE TABLE poem_distances (id serial primary key, poem1 int, poem2 int, distance real)")
     conn.commit()
 
     print("getting all poems")
@@ -59,7 +61,7 @@ def create_distance_db(conn, model, docs):
     print("commiting to db")
     for i in range(len(indeces)):
         vals = (indeces[i][0], indeces[i][1], lda_d[i] + size_d[i])
-        c.execute("INSERT INTO poem_distances VALUES (null, ?,?,?)", vals)
+        c.execute("INSERT INTO poem_distances (poem1, poem2, distance) VALUES (%s,%s,%s)", vals)
     conn.commit()
 
 
@@ -79,10 +81,22 @@ if __name__ == "__main__":
                         help='end num for adding poems')
 
     args = parser.parse_args()
-    conn = sqlite3.connect('poemdb2.db')
+
+    # sqlite3 connection
+    # conn = sqlite3.connect('poemdb2.db')
+    # c = conn.cursor()
+
+    # postgres on heroku connection
+    dotenv.load()
+    DATABASE = dotenv.get('DATABASE')
+    USER = dotenv.get('DBUSER')
+    HOST = dotenv.get('HOST')
+    PASSWORD = dotenv.get('PASSWORD')
+    cmd = "dbname='{}' user='{}' host='{}' password='{}'".format(DATABASE, USER, HOST, PASSWORD)
+    conn = psycopg2.connect(cmd)
     c = conn.cursor()
     # c.execute('drop table if exists {}'.format('poetry'))
-    # c.execute("CREATE TABLE poetry (id integer primary key, title text, poet text, url text, poem text)")
+    # c.execute("CREATE TABLE poetry (id serial primary key, title text, poet text, url text, poem text)")
     # conn.commit()
 
     if args.add_poems:

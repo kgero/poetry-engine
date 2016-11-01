@@ -62,30 +62,30 @@ def test_get_poems():
 def test_scrape_poem_page(conn):
 
     # test pome 1
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url1)
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
     assert inserted is True
 
-    check = db_mgmt.check_for_poem(conn, 'poetry', poet1, title1)
+    check = db_mgmt.check_for_poem(conn, 'poetry', poet1, title1, sql=True)
     assert check is True
 
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url1)
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
     assert inserted is False
 
     # test that poems of 0 length (i.e. image poems) are not inserted
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url_image)
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url_image, sql=True)
     assert inserted is False
 
     # test that urls that produce 404 are not inserted
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url404)
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url404, sql=True)
     assert inserted is False
 
 
 def test_scrape_website(conn):
     # test on a small num of nums
-    scraper.scrape_website(conn, 'poetry', base_url, 48760, 48761)
+    scraper.scrape_website(conn, 'poetry', base_url, 48760, 48761, sql=True)
 
-    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'Letter to the Local Police')
+    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'Letter to the Local Police', sql=True)
     assert check is True
 
-    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'On the Loss of Energy (and Other Things)')
+    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'On the Loss of Energy (and Other Things)', sql=True)
     assert check is True

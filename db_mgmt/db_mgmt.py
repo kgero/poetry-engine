@@ -1,5 +1,7 @@
 """Functions for inserting and retrieving data from a database."""
 import sqlite3
+import psycopg2
+import psycopg2.extras
 
 
 def print_db_table_info(conn, table):
@@ -13,7 +15,7 @@ def print_db_table_info(conn, table):
     print("Num entries: {}", get_num_rows(conn, table))
 
 
-def get_num_rows(conn, table):
+def get_num_rows(conn, table, sql=False):
     '''
     Returns the number of rows in the table.
 
@@ -22,7 +24,10 @@ def get_num_rows(conn, table):
     :return: int
     '''
     c = conn.cursor()
-    c.execute('SELECT rowid,* FROM {}'.format(table))
+    if sql:
+        c.execute('SELECT rowid,* FROM {}'.format(table))
+    else:
+        c.execute('SELECT * FROM {}'.format(table))
     all_rows = c.fetchall()
     return len(all_rows)
 
@@ -56,7 +61,7 @@ def create_table(conn, table, cols):
     return None
 
 
-def insert_vals(conn, table, vals):
+def insert_vals(conn, table, vals, sql=False):
     '''
     Return nothing. Insert vals into table.
 
@@ -66,9 +71,15 @@ def insert_vals(conn, table, vals):
     :return: None
     '''
     c = conn.cursor()
-    cmd = "INSERT INTO {} VALUES (null,".format(table)
+    if sql:
+        cmd = "INSERT INTO {} VALUES (null,".format(table)
+    else:
+        cmd = "INSERT INTO {} VALUES (".format("poetry (title, poet, url, poem)")
     for i in range(len(vals)):
-        cmd += "?,"
+        if sql:
+            cmd += "?,"
+        else:
+            cmd += "%s,"
     cmd = cmd[:-1]  # remove last comma
     cmd += ")"
 
@@ -78,7 +89,7 @@ def insert_vals(conn, table, vals):
     return None
 
 
-def check_for_poem(conn, table, poet, title):
+def check_for_poem(conn, table, poet, title, sql=False):
     '''
     Return True if the poem already exists in the database.
 
@@ -89,8 +100,10 @@ def check_for_poem(conn, table, poet, title):
     :return: boolean
     '''
     c = conn.cursor()
-    cmd = "SELECT * FROM {} WHERE poet=? AND title=?".format(table)
-    print(cmd)
+    if sql:
+        cmd = "SELECT * FROM {} WHERE poet=? AND title=?".format(table)
+    else:
+        cmd = "SELECT * FROM {} WHERE poet=%s AND title=%s".format(table)
     c.execute(cmd, (poet, title))
 
     if len(c.fetchall()) == 0:
@@ -98,7 +111,7 @@ def check_for_poem(conn, table, poet, title):
     return True
 
 
-def get_values(conn, table, col):
+def get_values(conn, table, col, sql=False):
     '''
     Return list of values from col.
 
@@ -109,8 +122,11 @@ def get_values(conn, table, col):
     '''
     values = []
 
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
+    if sql:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+    else:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute('SELECT * FROM {}'.format(table))
     all_rows = c.fetchall()
     for row in all_rows:

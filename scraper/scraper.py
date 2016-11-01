@@ -21,6 +21,7 @@ def get_poem_text(soup):
         for line in content.find_all('div'):
             text = html.parser.unescape(line.text).encode('utf8')
             out = text.decode('utf8').strip()
+            out = out.replace('\xa0', ' ')
             poem += "{}\n".format(out)
     return poem
 
@@ -32,13 +33,13 @@ def get_poem_info(soup):
     :param soup: BeautifulSoup object
     :return: tuple
     '''
-    title = soup.find("meta", property="og:title")["content"]
+    title = soup.find("span", attrs={'class': 'hdg hdg_1'}).text
     poet = soup.find("meta", property="article:author")["content"]
 
     return (title, poet)
 
 
-def scrape_poem_page(conn, table, url):
+def scrape_poem_page(conn, table, url, sql=False):
     '''
     Place poem info into database if it has text and is not already there.
 
@@ -60,14 +61,16 @@ def scrape_poem_page(conn, table, url):
         return False
 
     title, poet = get_poem_info(soup)
-    if db_mgmt.check_for_poem(conn, table, poet, title) is False:
+    if db_mgmt.check_for_poem(conn, table, poet, title, sql=sql) is False:
         poem = get_poem_text(soup)
-        db_mgmt.insert_vals(conn, table, (title, poet, url, poem))
+
+        print(title, poet, url)
+        db_mgmt.insert_vals(conn, table, (title, poet, url, poem), sql=sql)
         return True
     return False
 
 
-def scrape_website(conn, table, base_url, start_num, end_num, print_output=False):
+def scrape_website(conn, table, base_url, start_num, end_num, print_output=False, sql=False):
     '''
     Run through all pages and apply function.
 
@@ -85,7 +88,7 @@ def scrape_website(conn, table, base_url, start_num, end_num, print_output=False
     i = start_num
     while i <= end_num:
         url = base_url + str(i)
-        success = scrape_poem_page(conn, table, url)
+        success = scrape_poem_page(conn, table, url, sql=sql)
         if success and print_output:
             print(url)
         i += 1
