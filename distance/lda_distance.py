@@ -3,7 +3,7 @@ from distance import utils
 
 def get_lda_distance(model, docs):
     '''
-    Return list of poems indeces and list of normalized rms distances. 
+    Return list of poems indeces and list of normalized rms distances.
 
     :param model: lda model
     :param docs: lda docs
@@ -48,28 +48,30 @@ def lda_distance(doc1, doc2, model, printout=False):
     return rms
 
 
-def find_close_docs(doc1, model, num_to_return=10):
+def find_closest_doc(doc1, indeces, lda_d, size_d):
     '''
-    Return num_to_return closest documents to doc1 based on get_distance.
+    Return index of closest documents to doc1 based on get_distance.
 
-    :param doc1: int (index reference for docs)
-    :param model: lda output
-    :param num_to_return: int
-    :return: list (of index references for docs), list (of correspond rms vals)
+    :param doc1: int (index reference for base document)
+    :param indeces: list of tuples, each of two poem indeces (i.e. a relation)
+    :param lda_d: list of floats, corresponding to lda distance between poems
+    :param size_d: list of floats, corresponding to size distance between poems
+    :return: integer index of closest poem
     '''
 
-    close_docs = [0] * num_to_return
-    close_rms = [100] * num_to_return
+    return None
 
-    for doc in range(model.doc_topic_.shape[0]):
-        if doc == doc1:
-            continue
-        rms = get_distance(doc1, doc, model)
-        if close_rms[0] > rms:
-            insert_rms(close_docs, close_rms, doc, rms)
 
-    return close_docs, close_rms
+def get_distance(lda_d, size_d, l):
+    '''
+    Return distance as a function of the lda and size distance.
 
+    :param lda_d: float
+    :param size_d: float
+    :param l: float, weight for lda_d between 0 and 1
+    :return: float
+    '''
+    return None
 
 def insert_rms(close_docs, close_rms, doc, rms):
     '''

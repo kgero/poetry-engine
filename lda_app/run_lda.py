@@ -22,6 +22,28 @@ def run_lda(docs, n_topics=20, n_iter=1500, print_output=False):
     return model
 
 
+def get_top_topics(doc, model):
+    '''
+    Return list of top topic indeces (1 indexed) for a given doc.
+
+    :param doc: integer (1 indexed) reference to document
+    :param model: lda model
+    :return: list of integers referring to ordered top topics (top topic first)
+    '''
+    return None
+
+
+def get_top_words(topic, model):
+    '''
+    Return list of top words for a given topic.
+
+    :param topic: integer (1 indexed) reference to topic
+    :param model: lda model
+    :return: list of ordered words, top word first
+    '''
+    return None
+
+
 def print_lda_output(docs, model, vocab, titles):
 
     print(".components_ : ", model.components_.shape)
@@ -34,9 +56,12 @@ def print_lda_output(docs, model, vocab, titles):
     topic_word = model.topic_word_
     n_top_words = 8
 
+    # each element of topic_word is the distance of the correlating vocab word to the topic
+
     for i, topic_dist in enumerate(topic_word):
         topic_words = np.array(vocab)[np.argsort(topic_dist)][:-n_top_words:-1]
         print('Topic {}: {}'.format(i, ' '.join(topic_words)))
+        print(np.sort(topic_dist)[:-n_top_words:-1])
 
     doc_topic = model.doc_topic_
 

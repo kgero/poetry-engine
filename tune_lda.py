@@ -1,8 +1,18 @@
 import sqlite3
+import dotenv
+import psycopg2
 import db_mgmt.db_mgmt as db_mgmt
 import lda_app.create_docs as create_docs
 
-conn = sqlite3.connect('poemdb2.db')
+
+dotenv.load()
+DATABASE = dotenv.get('DATABASE')
+USER = dotenv.get('DBUSER')
+HOST = dotenv.get('HOST')
+PASSWORD = dotenv.get('PASSWORD')
+cmd = "dbname='{}' user='{}' host='{}' password='{}'".format(DATABASE, USER, HOST, PASSWORD)
+conn = psycopg2.connect(cmd)
+# conn = sqlite3.connect('poemdb2.db')
 
 raw_docs = db_mgmt.get_values(conn, 'poetry', 'poem')
 clean_docs = []

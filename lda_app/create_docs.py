@@ -20,7 +20,7 @@ import numpy as np
 
 from db_mgmt import db_mgmt
 
-stop_words = ['the', 'and', 'of', 'a', 'to', 'in', 'i']
+stop_words = ['the', 'and', 'of', 'a', 'to', 'with', 'that', 'on', 'is', 'it', 'in', 'i', 'as', 'for', 'from']
 
 
 def get_features(words, word_list):
@@ -99,6 +99,8 @@ def get_docs(conn, table, stopwords=False):
     :return: array, list
     '''
     raw_docs = db_mgmt.get_values(conn, table, 'poem')
+    if len(raw_docs) == 0:
+        raise('0 documents found.')
     clean_docs = []
     for doc in raw_docs:
         cleaned = read_poem(doc, stopwords=stopwords)
