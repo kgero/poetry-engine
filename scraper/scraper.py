@@ -1,52 +1,96 @@
 # based on https://github.com/eli8527/poetryfoundation-scraper/
 
+from db_mgmt import db_mgmt
+
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import html
 import re
-import os
 
 
-def download_poems(poet):
-    if not os.path.exists(os.path.join('poems', poet)):
-        os.mkdir(os.path.join('poems', poet))
+def get_poem_text(soup):
+    '''
+    Return text of poem.
 
-    url = "http://www.poetryfoundation.org/poems-and-poets/poets/detail/"+poet+"#about"
-    page = urlopen(url)
-    soup = BeautifulSoup(page.read(), "lxml")  # html.parser fails for certain poems
+    :param soup: BeautifulSoup object
+    :return: str
+    '''
+    poem = ''
+    poem_content = soup.find_all('div', {'class': 'poem'})
+    for content in poem_content:
+        for line in content.find_all('div'):
+            text = html.parser.unescape(line.text).encode('utf8')
+            out = text.decode('utf8').strip()
+            out = out.replace('\xa0', ' ')
+            poem += "{}\n".format(out)
+    return poem
 
-    # this ignores .*/resources/learning/core-poems/detail/.* poems
-    poems = soup.find_all('a', href=re.compile('.*/poems-and-poets/poems/detail/.*'))
 
-    # the first returned url has http:, the others start at //www. 
-    # i ... don't know why
-    found_poems = []
-    for poem in poems:
-        poem_url = poem.get('href')
-        if 'http:' not in poem_url:
-            poem_url = 'http:' + poem_url
-        if poem_url not in found_poems:
-            poem_page = urlopen(poem_url)
-            poem_soup = BeautifulSoup(poem_page.read(), "lxml")
+def get_poem_info(soup):
+    '''
+    Return (title, poet).
 
-            poem_title = poem_soup.find('span', {'class': 'hdg hdg_1'})
+    :param soup: BeautifulSoup object
+    :return: tuple
+    '''
+    title = soup.find("span", attrs={'class': 'hdg hdg_1'}).text
+    poet = soup.find("meta", property="article:author")["content"]
 
-            if poem_title:
-                title = html.parser.unescape(poem_title.text).encode('utf8')
-                title = title.decode('utf8')
-                title_filename = ''.join(e for e in title if e.isalnum())
+    return (title, poet)
 
-                found_poems.append(poem_url)
 
-                poem_content = poem_soup.find_all('div', {'class': 'poem'})
-                filepath = 'poems/' + poet + '/' + title_filename + '.txt'
-                output = open(filepath, 'w')
-                print(poem_url, file=output)
-                print(title, file=output)
-                for content in poem_content:
-                    for line in content.find_all('div'):
-                        text = html.parser.unescape(line.text).encode('utf8')
-                        out = text.decode('utf8')
-                        print(out, file=output)
+def scrape_poem_page(conn, table, url, sql=False):
+    '''
+    Place poem info into database if it has text and is not already there.
 
-                output.close()
+    Return True is poem is inserted.
+
+    :param conn: sqlite connection
+    :param table: str
+    :param url: str
+    :return: None
+    '''
+    try:
+        page = urlopen(url)
+    except:
+        return False
+
+    soup = BeautifulSoup(page.read(), "lxml")
+    poem = get_poem_text(soup)
+    if len(poem) == 0:
+        return False
+
+    title, poet = get_poem_info(soup)
+    if db_mgmt.check_for_poem(conn, table, poet, title, sql=sql) is False:
+        poem = get_poem_text(soup)
+
+        print(title, poet, url)
+        db_mgmt.insert_vals(conn, table, (title, poet, url, poem), sql=sql)
+        return True
+    return False
+
+
+def scrape_website(conn, table, base_url, start_num, end_num, print_output=False, sql=False):
+    '''
+    Run through all pages and apply function.
+
+    base_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/
+    example_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/48160
+
+    :param conn: slqlite connection
+    :param table: str
+    :param base_url: str
+    :param start_num: int
+    :param end_num: int
+    :param print_output: bool
+    :return: None
+    '''
+    i = start_num
+    while i <= end_num:
+        url = base_url + str(i)
+        success = scrape_poem_page(conn, table, url, sql=sql)
+        if success and print_output:
+            print(url)
+        i += 1
+
+    return None

@@ -1,35 +1,91 @@
 from scraper import scraper
+from scraper.tests.text import text1, text2
+
+from db_mgmt import db_mgmt
+
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+
+import sqlite3
+import pytest
 import os
 
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
+url1 = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/90734'
+poet1 = 'Warsan Shire'
+title1 = 'Backwards'
 
-def test_download_poems_erika_meitner():
-    scraper.download_poems('erika-meitner')
-    poems = ['TerraNullius', 'YizkerBukh', 'Yiddishland', 'StakingaClaim']
-    for poem in poems:
-        expected_p = 'test_data/poems/erika-meitner/'+poem+'.txt'
-        actual_p = 'poems/erika-meitner/'+poem+'.txt'
-        assert os.path.exists(expected_p)
-        assert file_len(expected_p) == file_len(actual_p)
-        with open(expected_p, 'r') as expected, open(actual_p, 'r') as actual:
-            expected_l = expected.readline()
-            actual_l = actual.readline()
-            assert expected_l == actual_l
+url2 = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/57956'
+poet2 = 'Erika Meitner'
+title2 = 'Staking a Claim'
+
+url404 = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/61596'
+url_image = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/21596'
+
+base_url = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/'
+
+# failed poem title: This Can&rsquo;t Be
+
+@pytest.fixture(scope="module")
+def conn(request):
+    conn = sqlite3.connect('temp/test.db')
+    c = conn.cursor()
+    c.execute("CREATE TABLE poetry (id integer primary key, title text, poet text, url text, poem text)")
+    conn.commit()
+
+    def fin():
+        print ("teardown conn")
+        conn.close()
+        os.remove('temp/test.db')
+
+    request.addfinalizer(fin)
+    return conn  # provide the fixture value
 
 
-def test_download_poems_walt_whitmean():
-    scraper.download_poems('walt-whitman')
-    poems = ['America', 'Areyouthenewpersondrawntowardme']
-    for poem in poems:
-        expected_p = 'test_data/poems/walt-whitman/'+poem+'.txt'
-        actual_p = 'poems/walt-whitman/'+poem+'.txt'
-        assert os.path.exists(expected_p)
-        assert file_len(expected_p) == file_len(actual_p)
-        with open(expected_p, 'r') as expected, open(actual_p, 'r') as actual:
-            expected_l = expected.readline()
-            actual_l = actual.readline()
-            assert expected_l == actual_l
+def test_get_poems():
+    page = urlopen(url1)
+    soup = BeautifulSoup(page.read(), "lxml")
+    title, poet = scraper.get_poem_info(soup)
+    text = scraper.get_poem_text(soup)
+    assert text1 == text
+    assert title1 == title
+    assert poet1 == poet
+
+    page = urlopen(url2)
+    soup = BeautifulSoup(page.read(), "lxml")
+    title, poet = scraper.get_poem_info(soup)
+    text = scraper.get_poem_text(soup)
+    assert text2 == text
+    assert title2 == title
+    assert poet2 == poet
+
+
+def test_scrape_poem_page(conn):
+
+    # test pome 1
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
+    assert inserted is True
+
+    check = db_mgmt.check_for_poem(conn, 'poetry', poet1, title1, sql=True)
+    assert check is True
+
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
+    assert inserted is False
+
+    # test that poems of 0 length (i.e. image poems) are not inserted
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url_image, sql=True)
+    assert inserted is False
+
+    # test that urls that produce 404 are not inserted
+    inserted = scraper.scrape_poem_page(conn, 'poetry', url404, sql=True)
+    assert inserted is False
+
+
+def test_scrape_website(conn):
+    # test on a small num of nums
+    scraper.scrape_website(conn, 'poetry', base_url, 48760, 48761, sql=True)
+
+    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'Letter to the Local Police', sql=True)
+    assert check is True
+
+    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'On the Loss of Energy (and Other Things)', sql=True)
+    assert check is True

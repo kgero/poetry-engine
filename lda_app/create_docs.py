@@ -13,17 +13,21 @@ Per directory:
 word_list = [word1, word2, word3]
 """
 
-import os
+import re
 import string
 
 import numpy as np
 
+from db_mgmt import db_mgmt
+
+stop_words = ['the', 'and', 'of', 'a', 'an', 'to', 'with', 'that', 'on', 'is', 'it', 'in', 'i', 'as', 'for', 'from', 'are']
+
 
 def get_features(words, word_list):
     '''
-    Returns a word_dict and updated word_list.
+    Return a word_dict and updated word_list.
 
-    :param words: str
+    :param words: str (words are space separated)
     :param word_list: list
     :return: dict, list
     '''
@@ -38,30 +42,35 @@ def get_features(words, word_list):
     return word_dict, word_list
 
 
-def read_poem(path):
+def read_poem(poem, stopwords=False):
     '''
-    Returns a cleaned string, all lower case, punctuation removed.
+    Return a cleaned string.
+
+    Returned string is all lower case with punctuation and line feeds removed.
 
     :param path: str
     :return: str
     '''
-    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’'})
+    # idea: could lemma-lize words...
+    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’“'})
     trnsltr2 = str.maketrans('\n', ' ')
-    clean_str = ''
-    first_line = 1
 
-    with open(path, 'r') as f:
-        for line in f:
-            if first_line:
-                first_line = 0
-                continue
-            clean_str += line.translate(trnsltr1).translate(trnsltr2).lower()
+    clean_str = poem.translate(trnsltr1).translate(trnsltr2).lower()
+
+    if stopwords:
+        words = clean_str.split()
+        keepwords = [word for word in words if word not in stop_words]
+        clean_str = ' '.join(keepwords)
+
+    clean_str = re.sub(' +', ' ', clean_str)
+    clean_str = clean_str.strip()
+
     return clean_str
 
 
 def lexicalize(raw_docs):
     '''
-    Returns a document array based on raw_docs, a list of cleaned strings.
+    Return a document array based on raw_docs, a list of cleaned strings.
 
     :param raw_docs: list
     :return: array
@@ -82,39 +91,49 @@ def lexicalize(raw_docs):
     return documents, word_list
 
 
-def get_poet(path_str):
+def get_docs(conn, table, stopwords=False):
     '''
-    Returns poet name. e.g. 'poems/walt-whiman' returns 'Walt Whitman'.
+    Return docs, for all entries in databse table from col 'poem'.
 
-    :param path_str: str
-    :return: str
+    :param conn: sqlite conn
+    :param table: str
+    :return: array, list
     '''
-    return path_str.split('/')[1].replace('-', ' ').title()
+    raw_docs = db_mgmt.get_values(conn, table, 'poem')
+    if len(raw_docs) == 0:
+        raise('0 documents found.')
+    clean_docs = []
+    for doc in raw_docs:
+        cleaned = read_poem(doc, stopwords=stopwords)
+        clean_docs.append(cleaned)
+    docs, vocab = lexicalize(clean_docs)
+    return docs, vocab
 
 
-def get_docs(directory):
+def get_vocab_freq(strings, doc_freq=False):
     '''
-    Returns docs, vocab, doc names, poets, and url of all text files in directory.
+    Return dict of vocab frequency for all strings.
 
-    :param directory: str
-    :return: array, list, list
+    Key is the word, value is num times seen if doc_freq=False.
+    Key is the word, value is num docs seen in if doc_freq=True.
+    This is used for determing stop words to be filtered out.
+
+    :param strings: list of str
+    :return: dict
     '''
-    raw_docs = []
-    doc_names = []
-    poets = []
-    urls = []
-
-    for root, subdir, files in os.walk(directory):
-        if root.count(os.path.sep) == 1:
-            for name in files:
-                path = os.path.join(root, name)
-                with open(path, 'r') as f:
-                    url = f.readline()
-                    doc_name = f.readline()
-                doc_names.append(doc_name)
-                raw_docs.append(read_poem(path))
-                poets.append(get_poet(root))
-                urls.append(url)
-
-    docs, vocab = lexicalize(raw_docs)
-    return docs, vocab, doc_names, poets, urls
+    vocab_freq = {}
+    for doc in strings:
+        cleaned = read_poem(doc)
+        word_dict, word_list = get_features(cleaned, [])
+        for word in word_dict:
+            if word in vocab_freq:
+                if not doc_freq:
+                    vocab_freq[word] += word_dict[word]
+                else:
+                    vocab_freq[word] += 1
+            else:
+                if not doc_freq:
+                    vocab_freq[word] = word_dict[word]
+                else:
+                    vocab_freq[word] = 1
+    return vocab_freq

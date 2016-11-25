@@ -1,4 +1,4 @@
-from lda_app.get_distance import insert_rms
+from distance.lda_distance import insert_rms
 
 
 def test_insert_rms():

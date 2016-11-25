@@ -1,4 +1,4 @@
-from lda_app.create_docs import get_features, lexicalize, read_poem, get_poet
+from lda_app.create_docs import get_features, lexicalize, read_poem, get_vocab_freq
 
 import numpy as np
 
@@ -33,14 +33,27 @@ def test_get_features():
 
 
 def test_read_poem():
-    expected_str = (
-        'america '
-        'centre of equal daughters equal sons all all alike endeard grown '
-        'ungrown young or old strong ample fair enduring capable rich '
-        'perennial with the earth with freedom law and love a grand sane '
-        'towering seated mother chaird in the adamant of time  ')
+    poem = '1\nWhat is it, this you want!?\n\nno now\n'
+    expected_str = '1 what is it this you want no now'
+    actual_str = read_poem(poem)
 
-    actual_str = read_poem('test_data/poems/walt-whitman/America.txt')
+    assert actual_str == expected_str
+
+    poem = 'is this it? and i you?'
+    expected_str = 'this you'
+    actual_str = read_poem(poem, stopwords=True)
+
+    assert actual_str == expected_str
+
+    poem = 'is this it? and i you?'
+    expected_str = 'is this it and i you'
+    actual_str = read_poem(poem, stopwords=False)
+
+    assert actual_str == expected_str
+
+    poem = "“i love you!"
+    expected_str = "i love you"
+    actual_str = read_poem(poem, stopwords=False)
 
     assert actual_str == expected_str
 
@@ -61,7 +74,28 @@ def test_lexicalize():
     assert actual_word_list == expected_word_list
 
 
-def test_get_poet():
-    path_str = 'poems/walt-whitman'
-    poet = 'Walt Whitman'
-    assert poet == get_poet(path_str)
+def test_get_vocab_freq():
+    strings = [
+        'hey hey who are you',
+        'hey person',
+        'hey you']
+
+    expected_vocab_freq = {
+        'hey': 4,
+        'who': 1,
+        'are': 1,
+        'you': 2,
+        'person': 1}
+
+    actual_vocab_freq = get_vocab_freq(strings)
+    assert actual_vocab_freq == expected_vocab_freq
+
+    expected_vocab_freq = {
+        'hey': 3,
+        'who': 1,
+        'are': 1,
+        'you': 2,
+        'person': 1}
+
+    actual_vocab_freq = get_vocab_freq(strings, doc_freq=True)
+    assert actual_vocab_freq == expected_vocab_freq
