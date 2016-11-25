@@ -24,13 +24,29 @@ def run_lda(docs, n_topics=20, n_iter=1500, print_output=False):
 
 def get_top_topics(doc, model):
     '''
-    Return list of top topic indeces (1 indexed) for a given doc.
+    Return list of top topic indeces (1 indexed) for a given doc in order.
 
     :param doc: integer (1 indexed) reference to document
     :param model: lda model
     :return: list of integers referring to ordered top topics (top topic first)
     '''
-    return None
+    doc_topic = model.doc_topic_
+    topics = doc_topic[doc - 1]
+
+    sorted_vals = sorted(topics, reverse=True)
+    sorted_topics = []
+    index_index = 0  # used if val has more than 1 index
+    last_val = 0
+    for val in sorted_vals:
+        if val == last_val:
+            index_index += 1
+        else:
+            index_index = 0
+        index = np.where(topics == val)
+        sorted_topics.append(index[0][index_index] + 1)
+        last_val = val
+
+    return sorted_topics
 
 
 def get_top_words(topic, model):

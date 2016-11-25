@@ -40,13 +40,19 @@ def test_read_poem():
     assert actual_str == expected_str
 
     poem = 'is this it? and i you?'
-    expected_str = 'is this it you'
+    expected_str = 'this you'
     actual_str = read_poem(poem, stopwords=True)
 
     assert actual_str == expected_str
 
     poem = 'is this it? and i you?'
     expected_str = 'is this it and i you'
+    actual_str = read_poem(poem, stopwords=False)
+
+    assert actual_str == expected_str
+
+    poem = "“i love you!"
+    expected_str = "i love you"
     actual_str = read_poem(poem, stopwords=False)
 
     assert actual_str == expected_str
