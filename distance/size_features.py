@@ -24,6 +24,29 @@ def get_num_words(poem_text):
     return float(len(x))
 
 
+def get_line_length(poem_text):
+    '''
+    Return average line length in characters.
+
+    :param poem_text: str
+    :return: float
+    '''
+    return None
+
+
+def size_distance(poem_text1, poem_text2, norm_val=False):
+    '''
+    Return size distance between poems. 
+    If norm_val is provided with dictionary, returns normalized distance.
+
+    :param poem_text1: str
+    :param poem_text2: str
+    :param norm_val: dictionary (defaults to False is not provided)
+    :return: float
+    '''
+    return None
+
+
 def get_size_features(all_poems):
     '''
     Return corresponding list of num_lines and list of num_words.
@@ -37,6 +60,7 @@ def get_size_features(all_poems):
         num_words.append(get_num_words(poem))
         num_lines.append(get_num_lines(poem))
     return num_lines, num_words
+
 
 def get_size_distance(index_tuples, all_poems):
     '''
@@ -64,7 +88,7 @@ def get_size_distance(index_tuples, all_poems):
         word_distances.append((words1 - words2)**2)
         line_distances.append((lines1 - lines2)**2)
 
-    print("feature normalizatio")
+    print("feature normalization")
     word_distances = utils.normalize_feature(word_distances)
     line_distances = utils.normalize_feature(line_distances)
 
