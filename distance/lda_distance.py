@@ -1,12 +1,14 @@
+import numpy as np
 from distance import utils
 
 
-def get_lda_distance(model, docs):
+def get_lda_distance(model, docs, normalize=True):
     '''
     Return list of poems indeces and list of normalized rms distances.
 
     :param model: lda model
     :param docs: lda docs
+    :param normalize: True if returned distances should be pre-normalized
     :return: list of tuples, list of floats
     '''
     indeces = []
@@ -19,15 +21,18 @@ def get_lda_distance(model, docs):
             indeces.append((i + 1, j + 1))
             rms_distance.append(rms)
 
-    return indeces, utils.normalize_feature(rms_distance)
+    if normalize:
+        return indeces, utils.normalize_feature(rms_distance)
+    else:
+        return indeces, rms_distance
 
 
 def lda_distance(doc1, doc2, model, printout=False):
     '''
     Return the distance between two documents based on the lda model.
 
-    :param doc1: int (index reference for docs)
-    :param doc2: int (index reference for docs)
+    :param doc1: int (index reference for docs, i.e. 0 indexed)
+    :param doc2: int (index reference for docs, i.e. 0 indexed)
     :param model: lda output
     :param printout: bool
     :return: float
@@ -46,6 +51,39 @@ def lda_distance(doc1, doc2, model, printout=False):
         print(rms)
 
     return rms
+
+
+def lda_distance2(doc1, doc2, model, printout=False):
+    '''
+    Return the distance between top topics based on the lda model.
+
+    Returns rms distance between top topic for doc1 one and that same topic
+    in doc2. Idea is to match poems based on their strongest topic.
+
+    :param doc1: int (index reference for docs, i.e. 0 indexed)
+    :param doc2: int (index reference for docs, i.e. 0 indexed)
+    :param model: lda output
+    :param printout: bool
+    :return: float
+    '''
+
+    topics1 = model.doc_topic_[doc1]
+    topics2 = model.doc_topic_[doc2]
+
+    top_topic1 = np.where(topics1 == max(topics1))[0][0]
+    top_topic2 = np.where(topics2 == max(topics2))[0][0]
+    if top_topic1 != top_topic2:
+        return 100
+    val1 = topics1[top_topic1]
+    val2 = topics2[top_topic2]
+
+    if printout:
+        print(topics1)
+        print(topics2)
+        print(top_topic1)
+
+    return (val1 - val2)**2
+
 
 
 def find_closest_doc(doc1, indeces, lda_d, size_d):
