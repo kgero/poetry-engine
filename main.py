@@ -1,71 +1,91 @@
+import argparse
 import pickle
-import random
+import sqlite3
+import dotenv
+import psycopg2
 
-import lda
-
-from lda_app.create_docs import get_docs
-from lda_app.get_distance import get_distance, find_close_docs
-
-import numpy as np
-
+from db_mgmt import db_mgmt, create_db
 from scraper import scraper
-
-RUN_SCRAPER = False
-RUN_LDA = False
-LOAD_LAST_LDA = True
-PRINT_LDA_OUTPUT = True
-GET_DISTANCE = True
-
-if RUN_SCRAPER:
-    scraper.download_poems('louise-gluck')
-
-if RUN_LDA:
-    docs, vocab, titles, poets, urls = get_docs("poems")
-
-    print('Document dimensions:')
-    print(docs.shape)
-
-    model = lda.LDA(n_topics=20, n_iter=1500, random_state=1)
-    model.fit(docs)
-    topic_word = model.topic_word_
-    n_top_words = 8
-
-    documents = (docs, vocab, titles, poets, urls)
-    pickle.dump(documents, open("temp/documents.p", "wb"))
-    pickle.dump(model, open("temp/model.p", "wb"))
+from lda_app import create_docs, run_lda
+from distance import lda_distance, utils
 
 
-if LOAD_LAST_LDA:
-    docs, vocab, titles, poets, urls = pickle.load(open("temp/documents.p", "rb"))
-    model = pickle.load(open("temp/model.p", "rb"))
-    topic_word = model.topic_word_
-    n_top_words = 8
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Put some data into database things!')
+    parser.add_argument('--add_poems', action='store_true',
+                        help='add poems to the poetry databse')
+    parser.add_argument('--run_lda', action='store_true',
+                        help='run lda on poems in current database')
+    parser.add_argument('--print_lda', action='store_true',
+                        help='print results of lda output stored in \
+                        /temp/lda_out.p and save top topic words to db.')
+    parser.add_argument('--get_distance', action='store_true',
+                        help='find closest poems and add to database')
+    parser.add_argument('--get_normalization', action='store_true',
+                        help='get normalization values for features')
+    parser.add_argument('-s', '--start_num', default=48000, type=int,
+                        help='start num for adding poems')
+    parser.add_argument('-e', '--end_num', default=48010, type=int,
+                        help='end num for adding poems')
 
+    args = parser.parse_args()
 
-if PRINT_LDA_OUTPUT:
-    print(".components_ : ", model.components_.shape)
-    print(".doc_topic_ : ", model.doc_topic_.shape)
-    print(".topic_word_ : ", model.topic_word_.shape)
-    print("docs : ", docs.shape)
-    print("vocab : ", len(vocab))
-    print("titles : ", len(titles))
+    # postgres on heroku connection
+    dotenv.load()
+    DATABASE = dotenv.get('DATABASE')
+    USER = dotenv.get('DBUSER')
+    HOST = dotenv.get('HOST')
+    PASSWORD = dotenv.get('PASSWORD')
+    cmd = "dbname='{}' user='{}' host='{}' password='{}'".format(DATABASE, USER, HOST, PASSWORD)
+    conn = psycopg2.connect(cmd)
+    c = conn.cursor()
+    # c.execute('drop table if exists {}'.format('poetry'))
+    # c.execute("CREATE TABLE poetry (id serial primary key, title text, poet text, url text, poem text, close_poem integer)")
+    # conn.commit()
 
-    for i, topic_dist in enumerate(topic_word):
-        topic_words = np.array(vocab)[np.argsort(topic_dist)][:-n_top_words:-1]
-        print('Topic {}: {}'.format(i, ' '.join(topic_words)))
+    if args.add_poems:
+        base_url = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/'
+        scraper.scrape_website(conn, 'poetry', base_url, args.start_num, args.end_num, print_output=True)
+        db_mgmt.print_db_table_info(conn, 'poetry')
 
-    doc_topic = model.doc_topic_
+    if args.run_lda:
+        print("getting documents...")
+        docs, vocab = create_docs.get_docs(conn, 'poetry', stopwords=True)
+        titles = db_mgmt.get_values(conn, 'poetry', 'title')
 
-    for i in range(10):
-        print(titles[i])
-        print(doc_topic[i])
+        print("running lda...")
+        model = run_lda.run_lda(docs)
+        lda_out = (docs, vocab, titles, model)
+        pickle.dump(lda_out, open('temp/lda_out.p', 'wb'))
 
-if GET_DISTANCE:
-    get_distance(1, 2, model)
+        run_lda.print_lda_output(docs, model, vocab, titles)
 
-    doc = random.randrange(len(docs))
-    close_docs, close_rms = find_close_docs(doc, model)
-    print("Closest poems to {} by {}".format(titles[doc], poets[doc]))
-    for i in range(len(close_docs)-1, -1, -1):
-        print("{} by {}\t{}".format(titles[close_docs[i]], poets[close_docs[i]], close_rms[i]))
-        print(urls[close_docs[i]])
+    if args.print_lda:
+        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+        run_lda.print_lda_output(docs, model, vocab, titles)
+
+        create_db.create_topic_table(conn, model, vocab, 20)
+
+    if args.get_normalization:
+        print("loading lda model...")
+        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+
+        print("getting lda distances...")
+        i, lda_d = lda_distance.get_lda_distance(model, docs, normalize=False)
+
+        print("getting normalization attributes...")
+        norm_attr = {}
+        norm_attr["lda"] = utils.get_norm_attr(lda_d)
+        pickle.dump(norm_attr, open('temp/norm_attr.p', 'wb'))
+
+        print("\nnorm_attr:{}".format(norm_attr))
+
+    if args.get_distance:
+        print("loading lda model and norm_attr...")
+        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+        norm_attr = pickle.load(open('temp/norm_attr.p', 'rb'))
+
+        print("finding the closest poems. at 3850 poems, this takes about 15 minutes...")
+        create_db.add_close_poems(conn, model, docs, norm_attr, 0, len(titles))
+
+    conn.close()
