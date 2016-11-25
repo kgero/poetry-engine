@@ -20,7 +20,7 @@ import numpy as np
 
 from db_mgmt import db_mgmt
 
-stop_words = ['the', 'and', 'of', 'a', 'to', 'with', 'that', 'on', 'is', 'it', 'in', 'i', 'as', 'for', 'from']
+stop_words = ['the', 'and', 'of', 'a', 'an', 'to', 'with', 'that', 'on', 'is', 'it', 'in', 'i', 'as', 'for', 'from', 'are']
 
 
 def get_features(words, word_list):
@@ -51,7 +51,8 @@ def read_poem(poem, stopwords=False):
     :param path: str
     :return: str
     '''
-    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’'})
+    # idea: could lemma-lize words...
+    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’“'})
     trnsltr2 = str.maketrans('\n', ' ')
 
     clean_str = poem.translate(trnsltr1).translate(trnsltr2).lower()
