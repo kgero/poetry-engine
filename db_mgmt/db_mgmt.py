@@ -129,7 +129,7 @@ def get_values(conn, table, col, sql=False):
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute('SELECT * FROM {}'.format(table))
     all_rows = c.fetchall()
-    for row in all_rows:
+    for row in sorted(all_rows):
         val = row[col]
         values.append(val)
 

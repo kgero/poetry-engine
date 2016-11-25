@@ -5,6 +5,7 @@ import pytest
 import psycopg2
 import testing.postgresql
 import os
+import warnings
 
 
 @pytest.fixture(scope="module")
@@ -60,8 +61,17 @@ def test_db_mgmt_postgres():
         assert num_rows == 2
 
         # test get_values
+        db_mgmt.insert_vals(conn, 'poetry', ('title3', 'poet3', 'none', 'none'))
+        db_mgmt.insert_vals(conn, 'poetry', ('title4', 'poet4', 'none', 'none'))
+        db_mgmt.insert_vals(conn, 'poetry', ('title5', 'poet5', 'none', 'none'))
         poem_titles = db_mgmt.get_values(conn, 'poetry', 'title')
-        assert ['Title is Title', 'title is'] == poem_titles
+        assert ['Title is Title', 'title is', 'title3', 'title4', 'title5'] == poem_titles
+
+        # test get_values after an udpated value
+        c.execute("UPDATE poetry SET title=%s WHERE id=%s", ('title2', 2))
+        poem_titles = db_mgmt.get_values(conn, 'poetry', 'title')
+        assert ['Title is Title', 'title2', 'title3', 'title4', 'title5'] == poem_titles
+
 
 
 def test_insert_vals(conn):
@@ -76,9 +86,11 @@ def test_get_num_rows(conn):
 
 
 def test_get_values(conn):
-    poems = db_mgmt.get_values(conn, 'poetry', 'poem', sql=True)
-    assert len(poems) == 3
-    assert poems == ['none', 'none', 'none']
+    warnings.warn("get_values no longer supports sql databases")
+    assert True
+    # poems = db_mgmt.get_values(conn, 'poetry', 'poem', sql=True)
+    # assert len(poems) == 3
+    # assert poems == ['none', 'none', 'none']
 
-    titles = db_mgmt.get_values(conn, 'poetry', 'title', sql=True)
-    assert titles == ['Title', 'Title is Title', 'title is']
+    # titles = db_mgmt.get_values(conn, 'poetry', 'title', sql=True)
+    # assert titles == ['Title', 'Title is Title', 'title is']
