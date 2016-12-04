@@ -1,6 +1,7 @@
-from lda_app.create_docs import get_features, lexicalize, read_poem, get_vocab_freq
+from lda_app.create_docs import get_features, lexicalize, read_poem, get_stop_words, get_vocab_freq
 
 import numpy as np
+import os
 
 
 def test_get_features():
@@ -41,7 +42,7 @@ def test_read_poem():
 
     poem = 'is this it? and i you?'
     expected_str = 'this you'
-    actual_str = read_poem(poem, stopwords=True)
+    actual_str = read_poem(poem, stopwords=['is', 'it', 'and', 'i'])
 
     assert actual_str == expected_str
 
@@ -72,6 +73,19 @@ def test_lexicalize():
     actual_array, actual_word_list = lexicalize(raw_docs)
     assert actual_array.all() == expected_array.all()
     assert actual_word_list == expected_word_list
+
+
+def test_get_stop_words():
+    testfile = 'testwords.txt'
+    with open(testfile, 'w') as f:
+        f.write('hi,there,friend,')
+
+    expected_words = ['hi', 'there', 'friend']
+    actual_words = get_stop_words(testfile)
+
+    os.remove(testfile)
+
+    assert actual_words == expected_words
 
 
 def test_get_vocab_freq():

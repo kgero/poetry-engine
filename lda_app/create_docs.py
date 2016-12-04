@@ -49,17 +49,18 @@ def read_poem(poem, stopwords=False):
     Returned string is all lower case with punctuation and line feeds removed.
 
     :param path: str
+    :param stopwords: False or list of str
     :return: str
     '''
     # idea: could lemma-lize words...
-    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’“'})
+    trnsltr1 = str.maketrans({key: None for key in string.punctuation + '’“”'})
     trnsltr2 = str.maketrans('\n', ' ')
 
     clean_str = poem.translate(trnsltr1).translate(trnsltr2).lower()
 
     if stopwords:
         words = clean_str.split()
-        keepwords = [word for word in words if word not in stop_words]
+        keepwords = [word for word in words if word not in stopwords]
         clean_str = ' '.join(keepwords)
 
     clean_str = re.sub(' +', ' ', clean_str)
@@ -97,17 +98,34 @@ def get_docs(conn, table, stopwords=False):
 
     :param conn: sqlite conn
     :param table: str
+    :param stopwords: False or str (filepath to csv)
     :return: array, list
     '''
+    words = False
+    if stopwords:
+        words = get_stop_words(stopwords)
+    print("Stopwords: {}".format(words))
     raw_docs = db_mgmt.get_values(conn, table, 'poem')
     if len(raw_docs) == 0:
         raise('0 documents found.')
     clean_docs = []
     for doc in raw_docs:
-        cleaned = read_poem(doc, stopwords=stopwords)
+        cleaned = read_poem(doc, stopwords=words)
         clean_docs.append(cleaned)
     docs, vocab = lexicalize(clean_docs)
     return docs, vocab
+
+
+def get_stop_words(filepath):
+    '''
+    Return list of stop words.
+
+    :param filepath: str
+    :return: list of str
+    '''
+    with open(filepath, 'r') as f:
+        l = f.readline()
+    return l.split(',')[:-1]
 
 
 def get_vocab_freq(strings, doc_freq=False):
