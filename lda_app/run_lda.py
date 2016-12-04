@@ -49,15 +49,17 @@ def get_top_topics(doc, model):
     return sorted_topics
 
 
-def get_top_words(topic, model):
+def get_top_words(topic, model, vocab, num_words=20):
     '''
     Return list of top words for a given topic.
 
     :param topic: integer (1 indexed) reference to topic
     :param model: lda model
+    :param num_words: int num of words to return
     :return: list of ordered words, top word first
     '''
-    return None
+    topic_words = model.topic_word_[topic - 1]
+    return np.array(vocab)[np.argsort(topic_words)][:-num_words:-1]
 
 
 def print_lda_output(docs, model, vocab, titles):
@@ -70,7 +72,7 @@ def print_lda_output(docs, model, vocab, titles):
     print("titles : ", len(titles))
 
     topic_word = model.topic_word_
-    n_top_words = 8
+    n_top_words = 20
 
     # each element of topic_word is the distance of the correlating vocab word to the topic
 
