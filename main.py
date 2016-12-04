@@ -12,6 +12,8 @@ from distance import lda_distance, utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Put some data into database things!')
+    parser.add_argument('lda_output',
+                        help='pickle file to save or retrieve lda output')
     parser.add_argument('--add_poems', action='store_true',
                         help='add poems to the poetry databse')
     parser.add_argument('--run_lda', action='store_true',
@@ -50,25 +52,25 @@ if __name__ == "__main__":
 
     if args.run_lda:
         print("getting documents...")
-        docs, vocab = create_docs.get_docs(conn, 'poetry', stopwords=True)
+        docs, vocab = create_docs.get_docs(conn, 'poetry', stopwords='temp/stopwords.txt')
         titles = db_mgmt.get_values(conn, 'poetry', 'title')
 
         print("running lda...")
         model = run_lda.run_lda(docs)
         lda_out = (docs, vocab, titles, model)
-        pickle.dump(lda_out, open('temp/lda_out.p', 'wb'))
+        pickle.dump(lda_out, open(args.lda_output, 'wb'))
 
         run_lda.print_lda_output(docs, model, vocab, titles)
 
     if args.print_lda:
-        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+        (docs, vocab, titles, model) = pickle.load(open(args.lda_output, 'rb'))
         run_lda.print_lda_output(docs, model, vocab, titles)
 
         create_db.create_topic_table(conn, model, vocab, 20)
 
     if args.get_normalization:
         print("loading lda model...")
-        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+        (docs, vocab, titles, model) = pickle.load(open(args.lda_output, 'rb'))
 
         print("getting lda distances...")
         i, lda_d = lda_distance.get_lda_distance(model, docs, normalize=False)
@@ -82,7 +84,7 @@ if __name__ == "__main__":
 
     if args.get_distance:
         print("loading lda model and norm_attr...")
-        (docs, vocab, titles, model) = pickle.load(open('temp/lda_out.p', 'rb'))
+        (docs, vocab, titles, model) = pickle.load(open(args.lda_output, 'rb'))
         norm_attr = pickle.load(open('temp/norm_attr.p', 'rb'))
 
         print("finding the closest poems. at 3850 poems, this takes about 15 minutes...")
