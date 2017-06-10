@@ -90,5 +90,6 @@ def scrape_poem_page(url):
         'url': url,
         'poem': poem,
         'copyright': copyright,
-        'tags': tags
+        'tags': tags,
+        'source': 'Poetry Foundation'
     }
