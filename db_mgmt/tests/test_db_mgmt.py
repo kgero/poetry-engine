@@ -24,12 +24,21 @@ def db_manager(request):
 
 def test_add_poem(db_manager):
 
-    db_manager.add_poem("my_poem", "poet name", "url thing", "textextext")
+    # should return True
+    assert db_manager.add_poem("my_poem", "poet name", "url thing", "textextext")
+    assert db_manager.count_rows() == 1
+
+    assert not db_manager.add_poem(
+        "my_poem", "poet name", "different url", "textextext")
+    assert db_manager.count_rows() == 1
+
+    assert db_manager.add_poem(
+        "different_poem", "poet name", "url thing2", "lorem ipsum")
+    assert db_manager.count_rows() == 2
 
     with orm.db_session:
         p = Poetry.get(title="my_poem")
-        p2 = Poetry.get(title="conspicuously_absent")
 
         assert p is not None
         assert p.poet == "poet name"
-        assert p2 is None
+        assert p.poem == "textextext"
