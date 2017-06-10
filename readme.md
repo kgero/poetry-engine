@@ -12,7 +12,7 @@ Run the tests using py.test within the the virtual environment (but not running 
 
 ### Scrape Poems
 
-Scraped poems are entered into the local sqlite database poemdb2.db in a table called `poetry`.
+Scraped poems are entered into a Postgres database in a table called `poetry`. Settings for the database must be set in a .env file.
 
 Poems are scraped from poetryfoundation.org. Poem pages have urls like this:
 
@@ -24,14 +24,4 @@ Not all poem pages have poems. Some poem pages have poems as images, not text, w
 
 ### Run Analysis
 
-#### LDA
-
-Run the LDA analysis and store the resulting model as a pickled object in /temp. LDA analysis is run an all poems in the `poetry` table in poemdb2.db. At around 500 poems it starts to get a tad slow.
-
-`python create_db.py --run_lda`
-
-#### Distance
-
-Run the distance analysis and store the results in a relational table in poemdb2.db in a table called `poem_distances.`
-
-`python create_db.py --get-distance`
+???

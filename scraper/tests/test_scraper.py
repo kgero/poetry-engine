@@ -1,22 +1,28 @@
 from scraper import scraper
 from scraper.tests.text import text1, text2
 
-from db_mgmt import db_mgmt
-
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 
-import sqlite3
 import pytest
-import os
 
 url1 = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/90734'
 poet1 = 'Warsan Shire'
 title1 = 'Backwards'
+tags1 = 'Living,Health & Illness,Life Choices,The Body,Youth,\
+Relationships,Family & Ancestors,Home Life,Men & Women,Health & \
+Illness,Life Choices,The Body,Youth,Family & Ancestors,Home Life,\
+Men & Women,Meters,Free Verse,Free Verse'
+copyright1 = "Warsan Shire, 'Backwards.' Copyright © 2014 by Warsan Shire."
 
 url2 = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/57956'
 poet2 = 'Erika Meitner'
 title2 = 'Staking a Claim'
+tags2 = 'Love,Desire,Arts & Sciences,Poetry & Poets,Desire,Poetry & Poets,\
+Nostalgia,Passion,Life,Love,Youth'
+copyright2 = "Erika Meitner, 'Staking a Claim' from Copia. Copyright © 2014 by \
+Erika Meitner. Reprinted by permission of BOA Editions, Ltd. Source: Copia \
+(BOA Editions Ltd., 2014)"
 
 url404 = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/61596'
 url_image = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/21596'
@@ -26,32 +32,25 @@ base_url = 'https://www.poetryfoundation.org/poems-and-poets/poems/detail/'
 # failed poem title: This Can&rsquo;t Be
 
 @pytest.fixture(scope="module")
-def conn(request):
-    conn = sqlite3.connect('temp/test.db')
-    c = conn.cursor()
-    c.execute("CREATE TABLE poetry (id integer primary key, title text, poet text, url text, poem text)")
-    conn.commit()
-
-    def fin():
-        print ("teardown conn")
-        conn.close()
-        os.remove('temp/test.db')
-
-    request.addfinalizer(fin)
-    return conn  # provide the fixture value
-
-
-def test_get_poems():
+def soups(request):
     page = urlopen(url1)
-    soup = BeautifulSoup(page.read(), "lxml")
+    soup1 = BeautifulSoup(page.read(), "lxml")
+
+    page = urlopen(url2)
+    soup2 = BeautifulSoup(page.read(), "lxml")
+
+    return (soup1, soup2)
+
+
+def test_get_poems(soups):
+    soup = soups[0]
     title, poet = scraper.get_poem_info(soup)
     text = scraper.get_poem_text(soup)
     assert text1 == text
     assert title1 == title
     assert poet1 == poet
 
-    page = urlopen(url2)
-    soup = BeautifulSoup(page.read(), "lxml")
+    soup = soups[1]
     title, poet = scraper.get_poem_info(soup)
     text = scraper.get_poem_text(soup)
     assert text2 == text
@@ -59,33 +58,21 @@ def test_get_poems():
     assert poet2 == poet
 
 
-def test_scrape_poem_page(conn):
+def test_get_poem_tags(soups):
+    soup = soups[0]
+    tags = scraper.get_poem_tags(soup)
+    assert tags1 == tags
 
-    # test pome 1
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
-    assert inserted is True
-
-    check = db_mgmt.check_for_poem(conn, 'poetry', poet1, title1, sql=True)
-    assert check is True
-
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url1, sql=True)
-    assert inserted is False
-
-    # test that poems of 0 length (i.e. image poems) are not inserted
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url_image, sql=True)
-    assert inserted is False
-
-    # test that urls that produce 404 are not inserted
-    inserted = scraper.scrape_poem_page(conn, 'poetry', url404, sql=True)
-    assert inserted is False
+    soup = soups[1]
+    tags = scraper.get_poem_tags(soup)
+    assert tags2 == tags
 
 
-def test_scrape_website(conn):
-    # test on a small num of nums
-    scraper.scrape_website(conn, 'poetry', base_url, 48760, 48761, sql=True)
+def test_get_poem_copyright(soups):
+    soup = soups[0]
+    copyright = scraper.get_poem_copyright(soup)
+    assert copyright1 == copyright
 
-    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'Letter to the Local Police', sql=True)
-    assert check is True
-
-    check = db_mgmt.check_for_poem(conn, 'poetry', 'June Jordan', 'On the Loss of Energy (and Other Things)', sql=True)
-    assert check is True
+    soup = soups[1]
+    copyright = scraper.get_poem_copyright(soup)
+    assert copyright2 == copyright
