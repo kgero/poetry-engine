@@ -1,7 +1,3 @@
-# based on https://github.com/eli8527/poetryfoundation-scraper/
-
-from db_mgmt import db_mgmt
-
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import html
@@ -39,58 +35,60 @@ def get_poem_info(soup):
     return (title, poet)
 
 
-def scrape_poem_page(conn, table, url, sql=False):
+def get_poem_tags(soup):
     '''
-    Place poem info into database if it has text and is not already there.
+    Return string of comma separated tags.
 
-    Return True is poem is inserted.
+    :param soup: BeautifulSoup object
+    :return: str
+    '''
+    tags = soup.find("meta", property="article:tag")["content"]
+    return tags
 
-    :param conn: sqlite connection
-    :param table: str
+
+def get_poem_copyright(soup):
+    '''
+    Return string of copyrighti information.
+
+    I'm thinking later I can parse this for original publication
+    and original publication date.
+
+    :param soup: BeautifulSoup object
+    :return: str
+    '''
+    user_content = soup.find_all('div', {'class': 'user-content-text user-content-text_understate user-content-text_subtle'})
+    text = ""
+    for tag in user_content:
+        text += tag.get_text().strip() + " "
+    text = text.replace('"', "'")
+    text = text.replace('”', "'")
+    text = re.sub('\s+', ' ', text).strip()
+    return text
+
+
+def scrape_poem_page(url):
+    '''
+    Return poem data as dictionary. Dictionary keys should match table columns.
+    title, poet, url, poem, tags, copyright
+
     :param url: str
-    :return: None
+    :return: dict
     '''
-    try:
-        page = urlopen(url)
-    except:
-        return False
-
+    page = urlopen(url)
     soup = BeautifulSoup(page.read(), "lxml")
     poem = get_poem_text(soup)
     if len(poem) == 0:
-        return False
+        raise LookupError('No poem found on page. Sorry!')
 
     title, poet = get_poem_info(soup)
-    if db_mgmt.check_for_poem(conn, table, poet, title, sql=sql) is False:
-        poem = get_poem_text(soup)
+    copyright = get_poem_copyright(soup)
+    tags = get_poem_tags(soup)
 
-        print(title, poet, url)
-        db_mgmt.insert_vals(conn, table, (title, poet, url, poem), sql=sql)
-        return True
-    return False
-
-
-def scrape_website(conn, table, base_url, start_num, end_num, print_output=False, sql=False):
-    '''
-    Run through all pages and apply function.
-
-    base_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/
-    example_url: https://www.poetryfoundation.org/poems-and-poets/poems/detail/48160
-
-    :param conn: slqlite connection
-    :param table: str
-    :param base_url: str
-    :param start_num: int
-    :param end_num: int
-    :param print_output: bool
-    :return: None
-    '''
-    i = start_num
-    while i <= end_num:
-        url = base_url + str(i)
-        success = scrape_poem_page(conn, table, url, sql=sql)
-        if success and print_output:
-            print(url)
-        i += 1
-
-    return None
+    return {
+        'title': title,
+        'poet': poet,
+        'url': url,
+        'poem': poem,
+        'copyright': copyright,
+        'tags': tags
+    }

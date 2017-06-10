@@ -24,14 +24,4 @@ Not all poem pages have poems. Some poem pages have poems as images, not text, w
 
 ### Run Analysis
 
-#### LDA
-
-Run the LDA analysis and store the resulting model as a pickled object in /temp. LDA analysis is run an all poems in the `poetry` table in poemdb2.db. At around 500 poems it starts to get a tad slow.
-
-`python create_db.py --run_lda`
-
-#### Distance
-
-Run the distance analysis and store the results in a relational table in poemdb2.db in a table called `poem_distances.`
-
-`python create_db.py --get-distance`
+???
