@@ -12,7 +12,7 @@ Run the tests using py.test within the the virtual environment (but not running 
 
 ### Scrape Poems
 
-Scraped poems are entered into the local sqlite database poemdb2.db in a table called `poetry`.
+Scraped poems are entered into a Postgres database in a table called `poetry`. Settings for the database must be set in a .env file.
 
 Poems are scraped from poetryfoundation.org. Poem pages have urls like this:
 
