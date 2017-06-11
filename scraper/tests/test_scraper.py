@@ -1,4 +1,4 @@
-from scraper import scraper
+from scraper import pf_scraper as scraper
 from scraper.tests.text import text1, text2
 
 from bs4 import BeautifulSoup
@@ -24,6 +24,12 @@ copyright2 = "Erika Meitner, 'Staking a Claim' from Copia. Copyright © 2014 by 
 Erika Meitner. Reprinted by permission of BOA Editions, Ltd. Source: Copia \
 (BOA Editions Ltd., 2014)"
 
+url3 = "https://www.poetryfoundation.org/poems-and-poets/poems/detail/48612"
+tags3 = ""
+
+# image, no text poem
+url4 = "https://www.poetryfoundation.org/poems-and-poets/poems/detail/48802"
+
 url404 = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/61596'
 url_image = 'https://www.poetryfoundation.org/poetrymagazine/poems/detail/21596'
 
@@ -39,7 +45,13 @@ def soups(request):
     page = urlopen(url2)
     soup2 = BeautifulSoup(page.read(), "lxml")
 
-    return (soup1, soup2)
+    page = urlopen(url3)
+    soup3 = BeautifulSoup(page.read(), "lxml")
+
+    page = urlopen(url4)
+    soup4 = BeautifulSoup(page.read(), "lxml")
+
+    return (soup1, soup2, soup3, soup4)
 
 
 def test_get_poems(soups):
@@ -57,6 +69,10 @@ def test_get_poems(soups):
     assert title2 == title
     assert poet2 == poet
 
+    soup = soups[3]
+    text = scraper.get_poem_text(soup)
+    assert "" == text
+
 
 def test_get_poem_tags(soups):
     soup = soups[0]
@@ -66,6 +82,11 @@ def test_get_poem_tags(soups):
     soup = soups[1]
     tags = scraper.get_poem_tags(soup)
     assert tags2 == tags
+
+    soup = soups[2]
+    tags = scraper.get_poem_tags(soup)
+    assert tags3 == tags
+
 
 
 def test_get_poem_copyright(soups):

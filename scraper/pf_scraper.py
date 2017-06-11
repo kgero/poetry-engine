@@ -21,7 +21,10 @@ def get_poem_text(soup):
             out = text.decode('utf8').strip()
             out = out.replace('\xa0', ' ')
             poem += "{}\n".format(out)
-    return poem
+    if re.search('[a-zA-Z]', poem):  # sometimes poem will be a set of \n only
+        return poem
+    else:
+        return ""
 
 
 def get_poem_info(soup):
@@ -44,7 +47,10 @@ def get_poem_tags(soup):
     :param soup: BeautifulSoup object
     :return: str
     '''
-    tags = soup.find("meta", property="article:tag")["content"]
+    try:
+        tags = soup.find("meta", property="article:tag")["content"]
+    except TypeError:
+        tags = ""
     return tags
 
 
