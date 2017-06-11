@@ -1,4 +1,4 @@
-from features.size_features import NumLines, NumWords, CharWidth, WordSize
+from features.size_features import NumLines, NumWords, WidthInChar, WordSize
 
 poem1 = "Does not mean silence.\n\
 The absence of moon in the day sky\n\
@@ -20,20 +20,23 @@ poem = {'poem': poem1}
 
 
 def test_num_lines():
-    feat = NumLines("NumLines")
-    assert feat.get_feature(poem) == 15
+    feat = NumLines()
+    assert feat.get_feature(poem) == 14
+
+    poem_adj = {'poem': poem['poem'][:-1]}
+    assert feat.get_feature(poem_adj) == 14
 
 
 def test_num_words():
-    feat = NumWords("NumWords")
+    feat = NumWords()
     assert feat.get_feature(poem) == 14 + 20 + 32
 
 
-def test_char_width():
-    feat = CharWidth("CharWidth")
+def test_width_in_char():
+    feat = WidthInChar()
     assert feat.get_feature(poem) == 26.666666666666668
 
 
 def test_word_size():
-    feat = WordSize("WordSize")
+    feat = WordSize()
     assert feat.get_feature(poem) == 4.03030303030303

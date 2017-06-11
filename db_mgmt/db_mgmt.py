@@ -1,9 +1,5 @@
 """Functions for inserting and retrieving data from a database."""
 import dotenv
-import sqlite3
-import psycopg2
-import psycopg2.extras
-import os
 
 from pony import orm
 
@@ -20,6 +16,13 @@ class Poetry(db.Entity):
 
     close_poem = orm.Optional(int)
     top_topic = orm.Optional(int)
+
+    # size features
+    num_lines = orm.Optional(int)
+    num_words = orm.Optional(int)
+    word_size = orm.Optional(float)
+    width_in_char = orm.Optional(float)
+
 
 def _get_params_from_dotenv():
     dotenv.load("../.env")
@@ -138,7 +141,3 @@ class DatabaseManager(object):
             raise RuntimeError("To update poem, must specify either an index or a title")
 
         poem.set(**update_dict)
-
-
-
-
