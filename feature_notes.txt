@@ -1,0 +1,55 @@
+- how much rhyme (lots of full end rhymes v. few internal slant rhymes)
+- how much repetition v. variety (use lemming?)
+- line length variability
+- white space usage
+- punctuation usage
+
+
+
+- vocabulary 
+	- contemporary v. obscure
+	- object score
+	- abstract score
+	- image score
+	- concrete score
+	- emotion score
+	- valence score
+	- arousal score
+
+
+
+The Harvard General Inquirer (Stone et al., 1966) consists of 182
+word categories, including a category for words referring to concrete
+objects (Object: 661 words) and one for words referring to abstract
+concepts (ABS: 276 words). We computed an Object score for each
+poem by counting the number of words that appear in the Object
+category and dividing it by the total number of words in the poem. We
+similarly computed an Abstract score by counting the number of words
+that appear in the ABS category and dividing it by poem length.
+For more fine-grained psycholinguistic measures of imageability, we
+used the MRC Psycholinguistic Database (Wilson, 1988), which contains
+imageability ratings for 4, 954 words (Coltheart, 1981). We derived
+an Imageability score for each poem by computing the average imageability
+rating for all of the words in the poem that appeared in the
+database. Finally, we used concreteness ratings for 39, 955 words collected
+by Brysbaert et al. (2013) to compute the average concreteness
+of all words in the poem, resulting in a Concreteness score.
+
+
+As seen in Pound’s In a Station of the Metro, Imagist poets often use
+carefully chosen objects and imagery to evoke emotional reactions instead
+of depicting emotions explicitly (Hamilton, 2004). To quantify
+the degree of emotion explicitly described in each poem, we used the
+EMOT category (311 words) in the Harvard General Inquirer (Stone
+et al., 1966). We computed an Emotion score for each poem by counting
+and normalizing the number of words that appear in the EMOT
+category.
+To account for more fine-grained differences between negative-
+A computational analysis of poetic style / 7
+valence and positive-valence words (e.g. “torture” v.s. “love”) and lowarousal
+and high-arousal words (e.g. “sad” v.s. “panicky”), we in addition
+used the valence and arousal norms of 13, 915 words collected by Warriner
+et al. (2013). A Valence score was obtained for each poem by
+computing the average valence rating for all words in the poem that
+appeared in the database, and an Arousal score from average arousal
+ratings.
