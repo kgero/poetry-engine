@@ -16,6 +16,10 @@ Run the tests using py.test within the the virtual environment. (The last tags e
 
 `python -m py.test --ignore=venv`
 
+To run a single file of tests add the test filename at the end:
+
+`python -m py.test --ignore=venv features/tests/test_vocabulary_features.py`
+
 ### Scrape Poems
 
 Scraped poems are entered into a Postgres database in a table called `poetry`. Settings for the database must be set in a .env file.
