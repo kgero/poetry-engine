@@ -104,7 +104,7 @@ class DatabaseManager(object):
         :return: dictionary or None
         '''
         poem = None
-        if idx != '':
+        if id != '':
             poem = Poetry[id]
         elif title != '':
             poem = Poetry.get(title=title)
