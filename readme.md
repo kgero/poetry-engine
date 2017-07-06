@@ -20,7 +20,7 @@ To run a single file of tests add the test filename at the end:
 
 `python -m py.test --ignore=venv features/tests/test_vocabulary_features.py`
 
-### Scrape Poems
+### Update Poems
 
 Scraped poems are entered into a Postgres database in a table called `poetry`. Settings for the database must be set in a .env file.
 
@@ -28,9 +28,11 @@ Poems are scraped from poetryfoundation.org. Poem pages have urls like this:
 
 `https://www.poetryfoundation.org/poems-and-poets/poems/detail/48761`
 
-Not all poem pages have poems. Some poem pages have poems as images, not text, which is currently not supported. So when you scrape poems you need to specify the first and last number of the poem pages you want to attempt to collect poems from. All pages for which poems are added to the database are printed out in the console.
+Not all poem pages have poems. Some poem pages have poems as images, not text, which is currently not supported. 
 
-`python create_db.py --add-poems -s 48000 -e 48050`
+By default this will overwrite all entries in the database! Future functionality might do better with this, because sometimes poems are taken down!
+
+`python update_poems.py`
 
 ### Extract Features
 
@@ -40,6 +42,8 @@ When adding new features, two things must be updated:
 
 * Add the column to the database! I do this in Postico manually.
 * Update the Poetry model in `db_mgmt/db_mgmt.py`!
+
+`python extract_features.py`
 
 ### Find Nearest Neighbors
 
