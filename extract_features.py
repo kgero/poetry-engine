@@ -3,26 +3,31 @@ import argparse
 from db_mgmt.db_mgmt import DatabaseManager
 from db_mgmt.db_mgmt import Poetry
 from features.size_features import NumLines, NumWords, WidthInChar, WordSize
+from features.vocabulary_features import RepetitionScore, ObscurityScore
 from pony import orm
 
 
-all_features = [NumLines(), NumWords(), WidthInChar(), WordSize()]
-
+all_features = [NumLines(), NumWords(), WidthInChar(), WordSize(),
+                RepetitionScore(), ObscurityScore()]
 
 @orm.db_session
-def extract_all_features(overwrite=False):
-    c = 0
-    for db_poem in orm.select(p for p in Poetry).order_by(Poetry.id)[0:4000]:
-        if c % 100 == 0:
-            print("{} poems done".format(c))
-            orm.commit()
+def extraction(start, stop, overwrite=False):
+    db_poems = orm.select(p for p in Poetry).for_update().order_by(Poetry.id)
+    for db_poem in db_poems[start:stop]:
         for feature in all_features:
             name = feature.get_name()
             dict_poem = db_poem.to_dict()
             if not dict_poem.get(name) or overwrite:
                 value = feature.get_feature(dict_poem)
                 db_poem.set(**{name: value})
-        c += 1
+
+
+def extract_all_features(overwrite=False):
+    c = 0
+    while c < 4864:
+        extraction(c, c + 100, overwrite=overwrite)
+        print("{} poems done".format(c))
+        c += 100
 
 
 if __name__ == "__main__":
