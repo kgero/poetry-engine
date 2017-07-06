@@ -78,36 +78,57 @@ def nearest_neighbors(n):
     return nearest_n
 
 
+@orm.db_session
+def update_close_poem(results):
+    """
+    Update the close_poem index in the database using a results dictionary.
+
+    results = {
+        poem_id: [(dist, other_poem_id), (dist, some_other_poem_id), ... ]
+    }
+
+    Returns nothing.
+    """
+    for key, value in results.items():
+        db_poem = Poetry[key]
+        db_poem.close_poem = value[0][1]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find nearest neighbor for all\
                                      poems.')
     parser.add_argument('-r', '--run', action='store_true',
                         help='force run nearest neighbor even if pickled results\
                         is found at temp/nearest_neighbor.p')
-    args = parser.parse_args()
+    parser.add_argument('-u', '--update', action='store_true',
+                        help='update close_poem in database')
 
-    db_manager = DatabaseManager()
+    try:
+        args = parser.parse_args()
+        db_manager = DatabaseManager()
 
-    if not os.path.isdir('temp'):
-        os.path.mkdir('temp')
+        if not os.path.isdir('temp'):
+            os.path.mkdir('temp')
 
-    if not os.path.isfile('temp/nearest_neighbor.p') or args.run:
-        try:
+        if not os.path.isfile('temp/nearest_neighbor.p') or args.run:
             res = nearest_neighbors(10)
             pickle.dump(res, open('temp/nearest_neighbor.p', 'wb'))
-        except KeyboardInterrupt:
+        else:
+            res = pickle.load(open('temp/nearest_neighbor.p', 'rb'))
+
+        if args.update:
+            update_close_poem(res)
+
+        i = random.randint(0, 4000)
+        vals = res[i]
+
+        print("POEM ID: ", i)
+        print("POEM:\n", db_manager.get_poem(i)['poem'])
+        print("CLOSE POEM ID: ", vals[0][1])
+        print("CLOSE POEM:\n", db_manager.get_poem(vals[0][1])['poem'])
+
+    except KeyboardInterrupt:
             print("Hey there, I see you want to stop.")
-
-    else:
-        res = pickle.load(open('temp/nearest_neighbor.p', 'rb'))
-
-    i = random.randint(0, 4000)
-    vals = res[i]
-
-    print("POEM ID: ", i)
-    print("POEM:\n", db_manager.get_poem(i)['poem'])
-    print("CLOSE POEM ID: ", vals[0][1])
-    print("CLOSE POEM:\n", db_manager.get_poem(vals[0][1])['poem'])
 
     # print("compare!")
     # print(res[1])  # [(0.0018405363693838736, 4735), (0.002961621863987702, 3777), (0.003031168969311884, 4402), (0.0030491674081533178, 1976), (0.0031528731625999184, 4494), (0.003181975820665979, 1524), (0.003258518616697146, 2990), (0.0036164879172037095, 1231), (0.0036283852790374525, 4601), (0.0038571368116782348, 654)]
