@@ -34,7 +34,12 @@ Not all poem pages have poems. Some poem pages have poems as images, not text, w
 
 ### Extract Features
 
-???
+Run this to extract features for all poems in the database. You can choose to overwrite all features or only generate features that don't yet exist in the database.
+
+When adding new features, two things must be updated:
+
+* Add the column to the database! I do this in Postico manually.
+* Update the Poetry model in `db_mgmt/db_mgmt.py`!
 
 ### Find Nearest Neighbors
 
