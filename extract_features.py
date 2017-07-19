@@ -4,11 +4,12 @@ from db_mgmt.db_mgmt import DatabaseManager
 from db_mgmt.db_mgmt import Poetry
 from features.size_features import NumLines, NumWords, WidthInChar, WordSize
 from features.vocabulary_features import RepetitionScore, ObscurityScore
+from features.linguistic_features import SentenceScore
 from pony import orm
 
 
 all_features = [NumLines(), NumWords(), WidthInChar(), WordSize(),
-                RepetitionScore(), ObscurityScore()]
+                RepetitionScore(), ObscurityScore(), SentenceScore()]
 
 @orm.db_session
 def extraction(start, stop, overwrite=False):
