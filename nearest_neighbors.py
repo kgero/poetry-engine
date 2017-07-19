@@ -6,10 +6,13 @@ import random
 from db_mgmt.db_mgmt import DatabaseManager
 from db_mgmt.db_mgmt import Poetry
 from features.size_features import NumLines, NumWords, WidthInChar, WordSize
+from features.vocabulary_features import RepetitionScore, ObscurityScore
+from features.linguistic_features import SentenceScore
 from pony import orm
 
 
-all_features = [NumLines(), NumWords(), WidthInChar(), WordSize()]
+all_features = [NumLines(), NumWords(), WidthInChar(), WordSize(),
+                RepetitionScore(), ObscurityScore(), SentenceScore()]
 
 
 def _sd(data):
@@ -53,7 +56,7 @@ def nearest_neighbors(n):
 
     feature_names = [f.get_name() for f in all_features]
 
-    poem_data = [ [p['id']] + [p.get(f) for f in feature_names] for p in poems]
+    poem_data = [[p['id']] + [p.get(f) for f in feature_names] for p in poems]
     ids_features = list(zip(*poem_data))
     ids = ids_features[0]
     feature_cols = ids_features[1:]

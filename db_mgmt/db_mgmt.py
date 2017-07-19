@@ -24,6 +24,7 @@ class Poetry(db.Entity):
     width_in_char = orm.Optional(float)
     repetition_score = orm.Optional(float)
     obscurity_score = orm.Optional(float)
+    sentence_score = orm.Optional(float)
 
 
 def _get_params_from_dotenv():

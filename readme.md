@@ -52,3 +52,7 @@ Find the 'nearest neighbor' for each poems by calculating the distance between a
 The script will store a pickle of the results dictionary to `temp/nearest_neighbor.p` such that the results do not need to be re-run every time. Include the `-r` flag if you want to force a re-run.
 
 `python nearest_neighbor.py`
+
+## Broken links
+
+http://www.poetry-engine.com/poem/4793

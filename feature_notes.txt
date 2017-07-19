@@ -1,12 +1,7 @@
+Sound Features
 - how much rhyme (lots of full end rhymes v. few internal slant rhymes)
-- how much repetition v. variety (use lemming?)
-- line length variability
-- white space usage
-- punctuation usage
 
-
-
-- vocabulary 
+Vocab Features
 	- contemporary v. obscure
 	- object score
 	- abstract score
@@ -16,7 +11,18 @@
 	- valence score
 	- arousal score
 
+Visual Features
+- line length variability
+- white space usage / stanzas
 
+Linguistic Features
+- punctuation usage
+
+
+
+
+
+http://www.wjh.harvard.edu/~inquirer/homecat.htm
 
 The Harvard General Inquirer (Stone et al., 1966) consists of 182
 word categories, including a category for words referring to concrete
