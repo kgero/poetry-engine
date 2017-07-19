@@ -56,12 +56,10 @@ def add_close_poems(conn, model, docs, norm_attr, size_weight, num_poems=500):
                 best_distance = distance
                 best_poem = j
 
-        print("poem: {} close_poem: {}".format(i, best_poem))
         c.execute("UPDATE poetry SET close_poem=%s WHERE id=%s", (best_poem, i))
 
         topics = model.doc_topic_[i - 1]
         top_topic = int(np.where(topics == max(topics))[0][0]) + 1  # 1 indexed
-        print("poem: {} top_topic: {}".format(i, top_topic))
         c.execute("UPDATE poetry SET top_topic=%s WHERE id=%s", (top_topic, i))
 
         conn.commit()

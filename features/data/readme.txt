@@ -1,0 +1,1 @@
+wordfrequencies.csv is from the website wordfrequency.info and contains the top 5000 words in the english language according to them. Columns are: Rank,Word,Part of speech,Frequency,Dispersion

@@ -1,37 +1,54 @@
 # Poetry Recommendation Engine
 
+## Set-up
+
+poetry-engine runs on python 3. Get with it!
+
 ### VirtualEnv
-Install all required packages in a virtaul environment:
+
+Install all required packages in a virtual environment (a python 3 virtual env!):
 
 `pip install -r requirements.txt`
 
 ### Tests
-Run the tests using py.test within the the virtual environment (but not running the tests including the code in the virtual environment itself):
+
+Run the tests using py.test within the the virtual environment. (The last tags ensures we don't run the virtualenv tests, which are slow, not ours, and don't all pass):
 
 `python -m py.test --ignore=venv`
 
-### Scrape Poems
+To run a single file of tests add the test filename at the end:
 
-Scraped poems are entered into the local sqlite database poemdb2.db in a table called `poetry`.
+`python -m py.test --ignore=venv features/tests/test_vocabulary_features.py`
+
+### Update Poems
+
+Scraped poems are entered into a Postgres database in a table called `poetry`. Settings for the database must be set in a .env file.
 
 Poems are scraped from poetryfoundation.org. Poem pages have urls like this:
 
 `https://www.poetryfoundation.org/poems-and-poets/poems/detail/48761`
 
-Not all poem pages have poems. Some poem pages have poems as images, not text, which is currently not supported. So when you scrape poems you need to specify the first and last number of the poem pages you want to attempt to collect poems from. All pages for which poems are added to the database are printed out in the console.
+Not all poem pages have poems. Some poem pages have poems as images, not text, which is currently not supported. 
 
-`python create_db.py --add-poems -s 48000 -e 48050`
+By default this will overwrite all entries in the database! Future functionality might do better with this, because sometimes poems are taken down!
 
-### Run Analysis
+`python update_poems.py`
 
-#### LDA
+### Extract Features
 
-Run the LDA analysis and store the resulting model as a pickled object in /temp. LDA analysis is run an all poems in the `poetry` table in poemdb2.db. At around 500 poems it starts to get a tad slow.
+Run this to extract features for all poems in the database. You can choose to overwrite all features or only generate features that don't yet exist in the database.
 
-`python create_db.py --run_lda`
+When adding new features, two things must be updated:
 
-#### Distance
+* Add the column to the database! I do this in Postico manually.
+* Update the Poetry model in `db_mgmt/db_mgmt.py`!
 
-Run the distance analysis and store the results in a relational table in poemdb2.db in a table called `poem_distances.`
+`python extract_features.py`
 
-`python create_db.py --get-distance`
+### Find Nearest Neighbors
+
+Find the 'nearest neighbor' for each poems by calculating the distance between all other poems and selecting one with the lowest distance. Distance is simply the sum of the differences squared for all features. (Alternatively you can select a subset of features to use.) Features are first normalized before the difference is calculated such that all features give the same weighting.
+
+The script will store a pickle of the results dictionary to `temp/nearest_neighbor.p` such that the results do not need to be re-run every time. Include the `-r` flag if you want to force a re-run.
+
+`python nearest_neighbor.py`
